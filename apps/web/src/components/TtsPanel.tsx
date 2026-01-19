@@ -75,7 +75,9 @@ export default function TtsPanel({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const activeIndexRef = useRef<number | null>(null);
-  const fallbackTimer = useRef<number | null>(null);
+  const watchdogTimer = useRef<number | null>(null);
+  const playbackStartRef = useRef<number | null>(null);
+  const estimateMsRef = useRef<number | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -198,10 +200,12 @@ export default function TtsPanel({
       audioRef.current.src = "";
       audioRef.current = null;
     }
-    if (fallbackTimer.current) {
-      window.clearTimeout(fallbackTimer.current);
-      fallbackTimer.current = null;
+    if (watchdogTimer.current) {
+      window.clearInterval(watchdogTimer.current);
+      watchdogTimer.current = null;
     }
+    playbackStartRef.current = null;
+    estimateMsRef.current = null;
   }
 
   const playPhrase = async (index: number) => {
@@ -227,6 +231,7 @@ export default function TtsPanel({
     const controller = new AbortController();
     abortRef.current = controller;
     activeIndexRef.current = index;
+    estimateMsRef.current = Math.max(1400, safePhrase.length * 65 / Math.max(rate, 0.6) + 1200);
 
     try {
       const payload = {
@@ -254,35 +259,66 @@ export default function TtsPanel({
         } finally {
           setPlaying(false);
           setPaused(false);
-          if (fallbackTimer.current) {
-            window.clearTimeout(fallbackTimer.current);
-            fallbackTimer.current = null;
+          if (watchdogTimer.current) {
+            window.clearInterval(watchdogTimer.current);
+            watchdogTimer.current = null;
           }
         }
       };
       audio.onended = () => {
         if (activeIndexRef.current !== index) return;
-        if (fallbackTimer.current) {
-          window.clearTimeout(fallbackTimer.current);
-          fallbackTimer.current = null;
+        if (watchdogTimer.current) {
+          window.clearInterval(watchdogTimer.current);
+          watchdogTimer.current = null;
         }
         const nextIndex = index + 1;
         setCurrentIndex(nextIndex);
         playPhrase(nextIndex);
       };
       audio.onloadedmetadata = () => {
-        if (fallbackTimer.current) {
-          window.clearTimeout(fallbackTimer.current);
-        }
         const durationMs = Number.isFinite(audio.duration)
           ? Math.max(800, audio.duration * 1000 + 200)
-          : Math.max(1200, safePhrase.length * 70 / Math.max(rate, 0.6));
-        fallbackTimer.current = window.setTimeout(() => {
+          : Math.max(1400, safePhrase.length * 65 / Math.max(rate, 0.6) + 1200);
+        estimateMsRef.current = durationMs;
+      };
+      audio.onplay = () => {
+        playbackStartRef.current = Date.now();
+        if (watchdogTimer.current) {
+          window.clearInterval(watchdogTimer.current);
+        }
+        watchdogTimer.current = window.setInterval(() => {
           if (activeIndexRef.current !== index) return;
-          const nextIndex = index + 1;
-          setCurrentIndex(nextIndex);
-          playPhrase(nextIndex);
-        }, durationMs);
+          if (!audioRef.current) return;
+          if (audioRef.current.ended) {
+            const nextIndex = index + 1;
+            setCurrentIndex(nextIndex);
+            playPhrase(nextIndex);
+            return;
+          }
+          if (Number.isFinite(audioRef.current.duration)) {
+            if (audioRef.current.currentTime >= audioRef.current.duration - 0.05) {
+              const nextIndex = index + 1;
+              setCurrentIndex(nextIndex);
+              playPhrase(nextIndex);
+            }
+            return;
+          }
+          const estimateMs = estimateMsRef.current;
+          const startedAt = playbackStartRef.current;
+          if (estimateMs && startedAt && audioRef.current.currentTime > 0) {
+            if (Date.now() - startedAt > estimateMs) {
+              const nextIndex = index + 1;
+              setCurrentIndex(nextIndex);
+              playPhrase(nextIndex);
+            }
+          }
+        }, 250);
+      };
+      audio.onpause = () => {
+        if (watchdogTimer.current) {
+          window.clearInterval(watchdogTimer.current);
+          watchdogTimer.current = null;
+        }
       };
       await audio.play();
       setPlaying(true);
