@@ -57,6 +57,10 @@ function getVoicePaths(voiceId: string) {
   };
 }
 
+function sanitizeText(input: string) {
+  return input.replace(/[\uD800-\uDFFF]/g, "").trim();
+}
+
 function assertCommandAvailable(command: string) {
   const result = spawnSync(command, ["-version"], { stdio: "ignore" });
   if (result.error) {
@@ -122,6 +126,11 @@ export function createPiperProvider(): TtsProvider {
       }
       assertCommandAvailable("piper");
 
+      const safeText = sanitizeText(input.text);
+      if (!safeText) {
+        throw new Error("Text is empty after sanitization.");
+      }
+
       const lengthScale = Math.max(0.5, Math.min(2, 1 / Math.max(input.rate || 1, 0.5)));
       const tempFile = path.join(dataPaths.tmp, `${input.voice}-${Date.now()}.wav`);
       const piper = spawn("piper", [
@@ -136,7 +145,7 @@ export function createPiperProvider(): TtsProvider {
         stderr += chunk.toString();
       });
 
-      piper.stdin.write(input.text);
+      piper.stdin.write(safeText);
       piper.stdin.end();
 
       await new Promise<void>((resolve, reject) => {
