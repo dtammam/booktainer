@@ -1,6 +1,6 @@
 # Booktainer
 
-Booktainer is a single-container web library + reader for PDF, EPUB, MOBI, TXT, and Markdown with progress tracking and browser-native TTS.
+Booktainer is a single-container web library + reader for PDF, EPUB, MOBI, TXT, and Markdown with progress tracking and server-streamed TTS.
 
 ## Dev
 
@@ -62,6 +62,7 @@ docker compose up --build
 
 - MOBI uploads are converted server-side via Calibre `ebook-convert` to EPUB.
 - Progress is stored per book and restored on reload.
-- TTS uses the browser's Web Speech API with a phrase-level fallback for Safari boundary issues.
+- TTS streams audio from the server (online OpenAI or offline Piper).
+- Cached TTS audio is stored under `/data/tts-cache` for faster repeats.
 - `/data` is required for persistence (library, covers, progress).
 - Future: track OpenAI TTS costs per session.
