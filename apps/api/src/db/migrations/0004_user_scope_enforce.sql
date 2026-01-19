@@ -19,13 +19,9 @@ WITH default_owner AS (
     SELECT id, created_at, 0 as is_fallback
     FROM users
     WHERE is_admin = 1
-    ORDER BY created_at
-    LIMIT 1
     UNION ALL
     SELECT id, created_at, 1 as is_fallback
     FROM users
-    ORDER BY created_at
-    LIMIT 1
   )
   ORDER BY is_fallback, created_at
   LIMIT 1
@@ -82,13 +78,9 @@ WITH default_owner AS (
     SELECT id, created_at, 0 as is_fallback
     FROM users
     WHERE is_admin = 1
-    ORDER BY created_at
-    LIMIT 1
     UNION ALL
     SELECT id, created_at, 1 as is_fallback
     FROM users
-    ORDER BY created_at
-    LIMIT 1
   )
   ORDER BY is_fallback, created_at
   LIMIT 1
