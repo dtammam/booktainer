@@ -22,6 +22,9 @@ Dev note:
 - Auth smoke test:
   - Windows: apps/api/scripts/auth-smoke.ps1
   - Bash: apps/api/scripts/auth-smoke.sh
+- User scoping smoke test:
+  - Windows: apps/api/scripts/user-scope-smoke.ps1
+  - Bash: apps/api/scripts/user-scope-smoke.sh
 
 ## Docker
 
