@@ -17,7 +17,7 @@ try {
   $env:ADMIN_PASSWORD = "admin-pass"
 
   Write-Host "Building API..."
-  pnpm --filter ./apps/api build
+  pnpm -w --filter @booktainer/api build
 
   Write-Host "Starting API..."
   $apiProcess = Start-Process -FilePath "node" -ArgumentList "apps/api/dist/index.js" -WorkingDirectory $RepoRoot -PassThru

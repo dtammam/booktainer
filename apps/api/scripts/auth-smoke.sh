@@ -23,7 +23,7 @@ export ADMIN_PASSWORD="admin-pass"
 cd "$REPO_ROOT"
 
 echo "Building API..."
-pnpm --filter ./apps/api build
+pnpm -w --filter @booktainer/api build
 
 echo "Starting API..."
 node apps/api/dist/index.js &
