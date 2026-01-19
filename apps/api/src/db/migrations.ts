@@ -18,7 +18,7 @@ function resolveMigrationsDir() {
 
 type BetterSqlite3Database = ReturnType<typeof Database>;
 
-export function runMigrations(db: BetterSqlite3Database) {
+export function runMigrations(db: BetterSqlite3Database, options?: { stopBefore?: string }) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS migrations (
       id TEXT PRIMARY KEY,
@@ -46,6 +46,9 @@ export function runMigrations(db: BetterSqlite3Database) {
   });
 
   for (const file of files) {
+    if (options?.stopBefore && file === options.stopBefore) {
+      break;
+    }
     if (applied.has(file)) {
       continue;
     }

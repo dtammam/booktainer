@@ -26,6 +26,17 @@ export function countUsers(): number {
   return row.count;
 }
 
+export function getDefaultOwnerId(): string | null {
+  const stmt = db.prepare(`
+    SELECT id FROM users WHERE is_admin = 1 ORDER BY created_at LIMIT 1
+    UNION ALL
+    SELECT id FROM users ORDER BY created_at LIMIT 1
+    LIMIT 1
+  `);
+  const row = stmt.get() as { id: string } | undefined;
+  return row?.id ?? null;
+}
+
 export function getUserByEmail(email: string): DbUser | undefined {
   const stmt = db.prepare("SELECT * FROM users WHERE email = ? LIMIT 1");
   return stmt.get(email) as DbUser | undefined;

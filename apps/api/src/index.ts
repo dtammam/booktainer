@@ -5,6 +5,8 @@ import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
 import { env } from "./env";
+import { db } from "./db";
+import { runMigrations } from "./db/migrations";
 import { dataPaths } from "./paths";
 import { registerHealthRoutes } from "./modules/health/routes";
 import { registerBookRoutes } from "./modules/books/routes";
@@ -12,6 +14,7 @@ import { registerProgressRoutes } from "./modules/progress/routes";
 import { registerAuthRoutes } from "./modules/auth/routes";
 import { registerAdminRoutes } from "./modules/admin/routes";
 import { bootstrapAdmin, resolveRequestUser } from "./modules/auth/service";
+import { ensureDefaultOwnership } from "./modules/books/ownership";
 
 const app = Fastify({
   logger: {
@@ -68,7 +71,10 @@ async function start() {
   if (!env.sessionSecret) {
     throw new Error("SESSION_SECRET is required.");
   }
+  runMigrations(db, { stopBefore: "0004_user_scope_enforce.sql" });
   await bootstrapAdmin();
+  ensureDefaultOwnership();
+  runMigrations(db);
   await app.listen({ port: env.port, host: "0.0.0.0" });
   app.log.info(`Server listening on ${env.port}`);
 }

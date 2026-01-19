@@ -1,0 +1,4 @@
+ALTER TABLE books ADD COLUMN user_id TEXT;
+ALTER TABLE books ADD COLUMN updated_at TEXT;
+
+ALTER TABLE progress ADD COLUMN user_id TEXT;
