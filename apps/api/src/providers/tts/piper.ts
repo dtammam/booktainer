@@ -131,6 +131,11 @@ export function createPiperProvider(): TtsProvider {
         "--output_file", tempFile
       ]);
 
+      let stderr = "";
+      piper.stderr.on("data", (chunk) => {
+        stderr += chunk.toString();
+      });
+
       piper.stdin.write(input.text);
       piper.stdin.end();
 
@@ -138,7 +143,8 @@ export function createPiperProvider(): TtsProvider {
         piper.on("error", reject);
         piper.on("close", (code) => {
           if (code !== 0) {
-            reject(new Error("Piper exited with error."));
+            const detail = stderr.trim();
+            reject(new Error(detail ? `Piper failed: ${detail}` : "Piper exited with error."));
             return;
           }
           resolve();
