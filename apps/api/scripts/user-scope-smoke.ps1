@@ -61,8 +61,26 @@ try {
 
   $samplePath = Join-Path $DataDir "sample.txt"
   "Hello from user A" | Set-Content -Path $samplePath
-  $form = @{ file = Get-Item $samplePath }
-  $book = Invoke-RestMethod -Uri "http://localhost:8080/api/books/upload" -Method Post -Form $form -WebSession $userASession
+  $fileStream = [System.IO.File]::OpenRead($samplePath)
+  try {
+    $fileContent = New-Object System.Net.Http.StreamContent($fileStream)
+    $fileContent.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::Parse("text/plain")
+    $multipart = New-Object System.Net.Http.MultipartFormDataContent
+    $multipart.Add($fileContent, "file", "sample.txt")
+
+    $handler = New-Object System.Net.Http.HttpClientHandler
+    $handler.UseCookies = $true
+    $handler.CookieContainer = $userASession.Cookies
+
+    $client = New-Object System.Net.Http.HttpClient($handler)
+    $response = $client.PostAsync("http://localhost:8080/api/books/upload", $multipart).Result
+    if (-not $response.IsSuccessStatusCode) {
+      throw "Upload failed with status $($response.StatusCode)."
+    }
+    $book = $response.Content.ReadAsStringAsync().Result | ConvertFrom-Json
+  } finally {
+    $fileStream.Dispose()
+  }
   if (-not $book.id) {
     throw "Upload did not return a book id."
   }
