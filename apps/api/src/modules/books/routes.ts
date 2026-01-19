@@ -17,16 +17,22 @@ function formatFromExtension(ext: string) {
 
 export function registerBookRoutes(app: FastifyInstance) {
   app.get("/api/books", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
     const sort = (request.query as { sort?: string }).sort || "dateAdded";
     const q = (request.query as { q?: string }).q || null;
     const sortKey = (sort === "title" || sort === "author" || sort === "dateAdded") ? sort : "dateAdded";
-    const response = listBookRecords(sortKey, q);
+    const response = listBookRecords(request.user.id, sortKey, q);
     return reply.send(response);
   });
 
   app.get("/api/books/:id", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
     const id = (request.params as { id: string }).id;
-    const record = getBookRecord(id);
+    const record = getBookRecord(request.user.id, id);
     if (!record) {
       return reply.code(404).send({ error: "Not found" });
     }
@@ -34,6 +40,9 @@ export function registerBookRoutes(app: FastifyInstance) {
   });
 
   app.patch("/api/books/:id", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
     const id = (request.params as { id: string }).id;
     const body = request.body as { title?: string; author?: string | null };
     let title: string | undefined;
@@ -43,7 +52,7 @@ export function registerBookRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: "Missing title" });
       }
     }
-    const updated = updateBookRecord(id, title, body.author);
+    const updated = updateBookRecord(request.user.id, id, title, body.author);
     if (!updated) {
       return reply.code(404).send({ error: "Not found" });
     }
@@ -51,8 +60,11 @@ export function registerBookRoutes(app: FastifyInstance) {
   });
 
   app.delete("/api/books/:id", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
     const id = (request.params as { id: string }).id;
-    const removed = await removeBook(id);
+    const removed = await removeBook(request.user.id, id);
     if (!removed) {
       return reply.code(404).send({ error: "Not found" });
     }
@@ -60,6 +72,9 @@ export function registerBookRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/books/upload", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
     if (!env.allowUpload) {
       return reply.code(403).send({ error: "Uploads disabled" });
     }
@@ -73,13 +88,16 @@ export function registerBookRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "Unsupported file format" });
     }
 
-    const record = await uploadBook(data, format, ext);
+    const record = await uploadBook(request.user.id, data, format, ext);
     return reply.send(record);
   });
 
   app.get("/api/books/:id/file", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
     const id = (request.params as { id: string }).id;
-    const result = await getBookFileStream(id, request.headers.range);
+    const result = await getBookFileStream(request.user.id, id, request.headers.range);
     if (!result) {
       return reply.code(404).send({ error: "Not found" });
     }
@@ -97,8 +115,11 @@ export function registerBookRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/books/:id/cover", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
     const id = (request.params as { id: string }).id;
-    const result = getBookCoverStream(id);
+    const result = getBookCoverStream(request.user.id, id);
     if (!result) {
       return reply.code(404).send({ error: "Not found" });
     }

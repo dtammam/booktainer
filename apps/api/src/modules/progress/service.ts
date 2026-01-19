@@ -1,8 +1,13 @@
 import type { BookProgressResponse } from "@booktainer/shared";
+import { getBook } from "../books/repo";
 import { getProgress, setProgress } from "./repo";
 
-export function getBookProgress(bookId: string): BookProgressResponse {
-  const progress = getProgress(bookId);
+export function getBookProgress(userId: string, bookId: string): BookProgressResponse | null {
+  const book = getBook(userId, bookId);
+  if (!book) {
+    return null;
+  }
+  const progress = getProgress(userId, bookId);
   return {
     progress: progress
       ? {
@@ -14,7 +19,12 @@ export function getBookProgress(bookId: string): BookProgressResponse {
   };
 }
 
-export function setBookProgress(bookId: string, location: Record<string, unknown>) {
+export function setBookProgress(userId: string, bookId: string, location: Record<string, unknown>): boolean {
+  const book = getBook(userId, bookId);
+  if (!book) {
+    return false;
+  }
   const updatedAt = new Date().toISOString();
-  setProgress(bookId, JSON.stringify(location), updatedAt);
+  setProgress(userId, bookId, JSON.stringify(location), updatedAt);
+  return true;
 }

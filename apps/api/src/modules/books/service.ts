@@ -28,44 +28,45 @@ function toBookRecord(row: ReturnType<typeof getBook>): BookRecord {
   };
 }
 
-export function listBookRecords(sort: "dateAdded" | "title" | "author", query: string | null): BooksListResponse {
-  const rows = listBooks(sort, query);
+export function listBookRecords(userId: string, sort: "dateAdded" | "title" | "author", query: string | null): BooksListResponse {
+  const rows = listBooks(userId, sort, query);
   const items = rows.map((row) => toBookRecord(row));
   return { items };
 }
 
-export function getBookRecord(id: string): BookRecord | null {
-  const row = getBook(id);
+export function getBookRecord(userId: string, id: string): BookRecord | null {
+  const row = getBook(userId, id);
   if (!row) {
     return null;
   }
   return toBookRecord(row);
 }
 
-export function updateBookRecord(id: string, title?: string, author?: string | null): BookRecord | null {
-  const row = getBook(id);
+export function updateBookRecord(userId: string, id: string, title?: string, author?: string | null): BookRecord | null {
+  const row = getBook(userId, id);
   if (!row) {
     return null;
   }
+  const updatedAt = new Date().toISOString();
   if (title !== undefined) {
-    updateBookTitle(id, title);
+    updateBookTitle(userId, id, title, updatedAt);
   }
   if (author !== undefined) {
     const nextAuthor = author?.trim();
-    updateBookAuthor(id, nextAuthor ? nextAuthor : null);
+    updateBookAuthor(userId, id, nextAuthor ? nextAuthor : null, updatedAt);
   }
-  const updated = getBook(id);
+  const updated = getBook(userId, id);
   return updated ? toBookRecord(updated) : null;
 }
 
-export async function removeBook(id: string): Promise<boolean> {
-  const row = getBook(id);
+export async function removeBook(userId: string, id: string): Promise<boolean> {
+  const row = getBook(userId, id);
   if (!row) {
     return false;
   }
   const bookDir = path.dirname(row.filePathOriginal);
   await fsp.rm(bookDir, { recursive: true, force: true });
-  deleteBook(id);
+  deleteBook(userId, id);
   return true;
 }
 
@@ -84,8 +85,8 @@ function parseRangeHeader(range: string | undefined, size: number): RangeResult 
   return { start, end, chunkSize: end - start + 1 };
 }
 
-export async function getBookFileStream(id: string, rangeHeader?: string) {
-  const row = getBook(id);
+export async function getBookFileStream(userId: string, id: string, rangeHeader?: string) {
+  const row = getBook(userId, id);
   if (!row) {
     return null;
   }
@@ -104,8 +105,8 @@ export async function getBookFileStream(id: string, rangeHeader?: string) {
   };
 }
 
-export function getBookCoverStream(id: string) {
-  const row = getBook(id);
+export function getBookCoverStream(userId: string, id: string) {
+  const row = getBook(userId, id);
   if (!row || !row.coverPath) {
     return null;
   }
@@ -223,7 +224,7 @@ async function extractEpubCover(filePath: string, bookId: string) {
   return targetPath;
 }
 
-export async function uploadBook(file: { filename: string; file: NodeJS.ReadableStream }, format: string, ext: string) {
+export async function uploadBook(userId: string, file: { filename: string; file: NodeJS.ReadableStream }, format: string, ext: string) {
   const id = uuidv4();
   const bookDir = path.join(dataPaths.library, id);
   await fsp.mkdir(bookDir, { recursive: true });
@@ -244,11 +245,13 @@ export async function uploadBook(file: { filename: string; file: NodeJS.Readable
 
   insertBook({
     id,
+    user_id: userId,
     title,
     author,
     format,
     canonicalFormat,
     dateAdded,
+    updated_at: dateAdded,
     filePathOriginal: originalPath,
     filePathCanonical: null,
     coverPath: null,
@@ -262,24 +265,24 @@ export async function uploadBook(file: { filename: string; file: NodeJS.Readable
       await convertMobiToEpub(originalPath, canonicalPath);
       const meta = await extractEpubMetadata(canonicalPath);
       if (meta?.title || meta?.author) {
-        updateBookMetadata(id, meta?.title || title, meta?.author || null);
+      updateBookMetadata(userId, id, meta?.title || title, meta?.author || null, new Date().toISOString());
       }
       const coverPath = await extractEpubCover(canonicalPath, id);
       if (coverPath) {
-        updateBookCover(id, coverPath);
+        updateBookCover(userId, id, coverPath, new Date().toISOString());
       }
-      updateBookStatus(id, "ready", null, canonicalPath);
+      updateBookStatus(userId, id, "ready", null, canonicalPath, new Date().toISOString());
     } catch (error) {
-      updateBookStatus(id, "error", error instanceof Error ? error.message : "Conversion failed", null);
+      updateBookStatus(userId, id, "error", error instanceof Error ? error.message : "Conversion failed", null, new Date().toISOString());
     }
   } else if (format === "epub") {
     const coverPath = await extractEpubCover(originalPath, id);
     if (coverPath) {
-      updateBookCover(id, coverPath);
+      updateBookCover(userId, id, coverPath, new Date().toISOString());
     }
   }
 
-  const row = getBook(id);
+  const row = getBook(userId, id);
   return toBookRecord(row);
 }
 
