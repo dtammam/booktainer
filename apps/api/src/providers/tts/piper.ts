@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
-import { Readable } from "node:stream";
+import { PassThrough, Readable } from "node:stream";
 import { env } from "../../env";
 import type { TtsProvider, TtsSpeakRequest, TtsSpeakResponse, TtsVoice } from "./interface";
 
@@ -131,8 +131,25 @@ export function createPiperProvider(): TtsProvider {
       piper.stdin.write(input.text);
       piper.stdin.end();
 
+      const stream = new PassThrough();
+      let bytes = 0;
+      piper.stdout.on("data", (chunk) => {
+        bytes += chunk.length;
+      });
+      piper.stdout.pipe(stream);
+      piper.on("close", (code) => {
+        if (code !== 0 || bytes === 0) {
+          stream.destroy(new Error("Piper produced no audio."));
+          return;
+        }
+        stream.end();
+      });
+      piper.on("error", (error) => {
+        stream.destroy(error);
+      });
+
       return {
-        stream: piper.stdout,
+        stream,
         contentType: "audio/wav"
       };
     }
