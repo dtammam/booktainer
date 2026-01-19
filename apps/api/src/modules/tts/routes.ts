@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { ttsInstallVoiceSchema, ttsSpeakSchema, ttsSpeakUrlSchema } from "./schemas";
-import { consumeTtsToken, createTtsToken, getDefaultTtsSelection, listTtsVoices, speakTts } from "./service";
+import { createTtsToken, getDefaultTtsSelection, getTtsToken, listTtsVoices, speakTts } from "./service";
 import { getPiperCatalog, installPiperVoice } from "../../providers/tts/piper";
 
 export function registerTtsRoutes(app: FastifyInstance) {
@@ -63,7 +63,7 @@ export function registerTtsRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: "Unauthorized" });
     }
     const token = (request.params as { token: string }).token;
-    const entry = consumeTtsToken(token);
+    const entry = getTtsToken(token);
     if (!entry || entry.userId !== request.user.id) {
       return reply.code(404).send({ error: "Not found" });
     }

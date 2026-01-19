@@ -11,6 +11,14 @@ type TtsTokenEntry = {
 
 const tokenStore = new Map<string, TtsTokenEntry>();
 
+function pruneExpiredTokens(now: number) {
+  for (const [token, entry] of tokenStore.entries()) {
+    if (entry.expiresAt <= now) {
+      tokenStore.delete(token);
+    }
+  }
+}
+
 export async function listTtsVoices() {
   return listAllVoices();
 }
@@ -45,6 +53,7 @@ export function speakTts(input: TtsSpeakInput) {
 export function createTtsToken(userId: string, input: TtsSpeakInput) {
   const ttlSeconds = Math.min(getSessionTtlSeconds(), 300);
   const token = crypto.randomUUID();
+  pruneExpiredTokens(Date.now());
   tokenStore.set(token, {
     input,
     userId,
@@ -53,13 +62,13 @@ export function createTtsToken(userId: string, input: TtsSpeakInput) {
   return token;
 }
 
-export function consumeTtsToken(token: string) {
+export function getTtsToken(token: string) {
   const entry = tokenStore.get(token);
   if (!entry) {
     return null;
   }
-  tokenStore.delete(token);
   if (entry.expiresAt <= Date.now()) {
+    tokenStore.delete(token);
     return null;
   }
   return entry;
