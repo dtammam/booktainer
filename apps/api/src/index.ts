@@ -9,6 +9,9 @@ import { dataPaths } from "./paths";
 import { registerHealthRoutes } from "./modules/health/routes";
 import { registerBookRoutes } from "./modules/books/routes";
 import { registerProgressRoutes } from "./modules/progress/routes";
+import { registerAuthRoutes } from "./modules/auth/routes";
+import { registerAdminRoutes } from "./modules/admin/routes";
+import { bootstrapAdmin, resolveRequestUser } from "./modules/auth/service";
 
 const app = Fastify({
   logger: {
@@ -38,10 +41,16 @@ if (fs.existsSync(webDist)) {
   });
 }
 
+app.decorateRequest("user", null);
+app.addHook("preHandler", async (request) => {
+  request.user = await resolveRequestUser(request);
+});
+
 registerHealthRoutes(app);
 registerBookRoutes(app);
 registerProgressRoutes(app);
-
+registerAuthRoutes(app);
+registerAdminRoutes(app);
 
 app.setNotFoundHandler((request, reply) => {
   if (request.raw.url?.startsWith("/api/")) {
@@ -56,6 +65,10 @@ app.setNotFoundHandler((request, reply) => {
 
 async function start() {
   await ensureDataDirs();
+  if (!env.sessionSecret) {
+    throw new Error("SESSION_SECRET is required.");
+  }
+  await bootstrapAdmin();
   await app.listen({ port: env.port, host: "0.0.0.0" });
   app.log.info(`Server listening on ${env.port}`);
 }
