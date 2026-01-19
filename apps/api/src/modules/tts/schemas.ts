@@ -10,3 +10,5 @@ export const ttsSpeakSchema = z.object({
 export const ttsInstallVoiceSchema = z.object({
   voice: z.string().min(1)
 });
+
+export const ttsSpeakUrlSchema = ttsSpeakSchema;

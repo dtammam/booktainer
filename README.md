@@ -64,3 +64,4 @@ docker compose up --build
 - Progress is stored per book and restored on reload.
 - TTS uses the browser's Web Speech API with a phrase-level fallback for Safari boundary issues.
 - `/data` is required for persistence (library, covers, progress).
+- Future: track OpenAI TTS costs per session.

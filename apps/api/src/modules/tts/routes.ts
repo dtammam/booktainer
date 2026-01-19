@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { ttsInstallVoiceSchema, ttsSpeakSchema } from "./schemas";
-import { getDefaultTtsSelection, listTtsVoices, speakTts } from "./service";
+import { ttsInstallVoiceSchema, ttsSpeakSchema, ttsSpeakUrlSchema } from "./schemas";
+import { consumeTtsToken, createTtsToken, getDefaultTtsSelection, listTtsVoices, speakTts } from "./service";
 import { getPiperCatalog, installPiperVoice } from "../../providers/tts/piper";
 
 export function registerTtsRoutes(app: FastifyInstance) {
@@ -33,6 +33,42 @@ export function registerTtsRoutes(app: FastifyInstance) {
         rate: parsed.data.rate ?? 1,
         text: parsed.data.text
       });
+      reply.header("Cache-Control", "no-store");
+      reply.header("Content-Type", result.contentType);
+      return reply.send(result.stream);
+    } catch (error) {
+      return reply.code(400).send({ error: error instanceof Error ? error.message : "TTS failed" });
+    }
+  });
+
+  app.post("/api/tts/speak-url", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
+    const parsed = ttsSpeakUrlSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: "Invalid request body" });
+    }
+    const token = createTtsToken(request.user.id, {
+      mode: parsed.data.mode,
+      voice: parsed.data.voice,
+      rate: parsed.data.rate ?? 1,
+      text: parsed.data.text
+    });
+    return reply.send({ url: `/api/tts/speak/${token}` });
+  });
+
+  app.get("/api/tts/speak/:token", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
+    const token = (request.params as { token: string }).token;
+    const entry = consumeTtsToken(token);
+    if (!entry || entry.userId !== request.user.id) {
+      return reply.code(404).send({ error: "Not found" });
+    }
+    try {
+      const result = await speakTts(entry.input);
       reply.header("Cache-Control", "no-store");
       reply.header("Content-Type", result.contentType);
       return reply.send(result.stream);

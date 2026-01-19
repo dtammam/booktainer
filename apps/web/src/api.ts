@@ -1,4 +1,4 @@
-import type { AuthLoginRequest, AuthLoginResponse, AuthMeResponse, BookRecord, BooksListResponse, BookProgressResponse, TtsVoicesResponse } from "@booktainer/shared";
+import type { AuthLoginRequest, AuthLoginResponse, AuthMeResponse, BookRecord, BooksListResponse, BookProgressResponse, TtsSpeakUrlResponse, TtsVoicesResponse } from "@booktainer/shared";
 
 export class AuthError extends Error {
   status: number;
@@ -40,6 +40,14 @@ export async function logout(): Promise<void> {
 
 export async function listTtsVoices(): Promise<TtsVoicesResponse> {
   return requestJson<TtsVoicesResponse>("/api/tts/voices");
+}
+
+export async function createTtsSpeakUrl(payload: { mode: "online" | "offline"; voice: string; rate?: number; text: string }): Promise<TtsSpeakUrlResponse> {
+  return requestJson<TtsSpeakUrlResponse>("/api/tts/speak-url", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
 }
 
 export async function listBooks(params: { sort: string; q: string }): Promise<BookRecord[]> {

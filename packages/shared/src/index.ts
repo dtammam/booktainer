@@ -87,6 +87,10 @@ export interface TtsInstallVoiceResponse {
   catalog: TtsVoice[];
 }
 
+export interface TtsSpeakUrlResponse {
+  url: string;
+}
+
 export interface BooksListResponse {
   items: BookRecord[];
 }

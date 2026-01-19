@@ -1,4 +1,15 @@
-import { listAllVoices, resolveProvider, type TtsSpeakInput } from "../../providers/tts/registry";
+import crypto from "node:crypto";
+import type { TtsSpeakInput } from "../../providers/tts/registry";
+import { listAllVoices, resolveProvider } from "../../providers/tts/registry";
+import { getSessionTtlSeconds } from "../auth/service";
+
+type TtsTokenEntry = {
+  input: TtsSpeakInput;
+  expiresAt: number;
+  userId: string;
+};
+
+const tokenStore = new Map<string, TtsTokenEntry>();
 
 export async function listTtsVoices() {
   return listAllVoices();
@@ -29,4 +40,27 @@ export function speakTts(input: TtsSpeakInput) {
     voice: input.voice,
     rate
   });
+}
+
+export function createTtsToken(userId: string, input: TtsSpeakInput) {
+  const ttlSeconds = Math.min(getSessionTtlSeconds(), 300);
+  const token = crypto.randomUUID();
+  tokenStore.set(token, {
+    input,
+    userId,
+    expiresAt: Date.now() + ttlSeconds * 1000
+  });
+  return token;
+}
+
+export function consumeTtsToken(token: string) {
+  const entry = tokenStore.get(token);
+  if (!entry) {
+    return null;
+  }
+  tokenStore.delete(token);
+  if (entry.expiresAt <= Date.now()) {
+    return null;
+  }
+  return entry;
 }
