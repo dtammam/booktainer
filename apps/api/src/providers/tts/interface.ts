@@ -13,6 +13,7 @@ export type TtsSpeakRequest = {
 export type TtsSpeakResponse = {
   stream: NodeJS.ReadableStream;
   contentType: string;
+  contentLength?: number;
 };
 
 export interface TtsProvider {

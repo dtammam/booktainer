@@ -174,7 +174,8 @@ export function createPiperProvider(): TtsProvider {
 
       return {
         stream,
-        contentType: "audio/wav"
+        contentType: "audio/wav",
+        contentLength: stat.size
       };
     }
   };

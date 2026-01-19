@@ -35,6 +35,9 @@ export function registerTtsRoutes(app: FastifyInstance) {
       });
       reply.header("Cache-Control", "no-store");
       reply.header("Content-Type", result.contentType);
+      if (result.contentLength) {
+        reply.header("Content-Length", result.contentLength.toString());
+      }
       return reply.send(result.stream);
     } catch (error) {
       return reply.code(400).send({ error: error instanceof Error ? error.message : "TTS failed" });
@@ -71,6 +74,9 @@ export function registerTtsRoutes(app: FastifyInstance) {
       const result = await speakTts(entry.input);
       reply.header("Cache-Control", "no-store");
       reply.header("Content-Type", result.contentType);
+      if (result.contentLength) {
+        reply.header("Content-Length", result.contentLength.toString());
+      }
       return reply.send(result.stream);
     } catch (error) {
       return reply.code(400).send({ error: error instanceof Error ? error.message : "TTS failed" });
