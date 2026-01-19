@@ -39,6 +39,10 @@ function splitIntoPhrases(text: string): string[] {
 
 type TtsMode = "online" | "offline";
 
+function sanitizeText(input: string) {
+  return input.replace(/[\uD800-\uDFFF]/g, "").trim();
+}
+
 export default function TtsPanel({
   text,
   startOffset,
@@ -203,6 +207,11 @@ export default function TtsPanel({
       onEnd?.();
       return;
     }
+    const safePhrase = sanitizeText(phrase);
+    if (!safePhrase) {
+      setError("Phrase is empty after sanitization.");
+      return;
+    }
     if (!voiceId) {
       setError("No voice selected.");
       return;
@@ -219,7 +228,7 @@ export default function TtsPanel({
         mode,
         voice: voiceId,
         rate,
-        text: phrase
+        text: safePhrase
       };
       const urlResponse = await createTtsSpeakUrl(payload);
       const audio = new Audio(urlResponse.url);
