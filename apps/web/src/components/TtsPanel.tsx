@@ -221,73 +221,22 @@ export default function TtsPanel({
         rate,
         text: phrase
       };
-      let useMediaSource = ("MediaSource" in window) && MediaSource.isTypeSupported("audio/mpeg");
-      let audio: HTMLAudioElement;
-
-      if (useMediaSource) {
-        const res = await fetch("/api/tts/speak", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        });
-        if (res.status === 401) {
-          onAuthError?.();
-          return;
-        }
-        if (!res.ok || !res.body) {
-          const detail = await res.text().catch(() => "");
-          throw new Error(detail || "TTS request failed.");
-        }
-        const mime = (res.headers.get("content-type") || "audio/mpeg").split(";")[0];
-        if (!MediaSource.isTypeSupported(mime)) {
-          useMediaSource = false;
-        } else {
-          const mediaSource = new MediaSource();
-          audio = new Audio();
-          audioRef.current = audio;
-          audio.src = URL.createObjectURL(mediaSource);
-          mediaSource.addEventListener("sourceopen", () => {
-            const sourceBuffer = mediaSource.addSourceBuffer(mime);
-            const reader = res.body!.getReader();
-            const pump = () => {
-              reader.read().then(({ done, value }) => {
-                if (done) {
-                  if (mediaSource.readyState === "open") {
-                    mediaSource.endOfStream();
-                  }
-                  return;
-                }
-                const append = () => {
-                  sourceBuffer.appendBuffer(value);
-                  sourceBuffer.addEventListener("updateend", pump, { once: true });
-                };
-                if (sourceBuffer.updating) {
-                  sourceBuffer.addEventListener("updateend", append, { once: true });
-                } else {
-                  append();
-                }
-              }).catch(() => null);
-            };
-            pump();
-          }, { once: true });
-          audio.onended = () => {
-            if (activeIndexRef.current !== index) return;
-            const nextIndex = index + 1;
-            setCurrentIndex(nextIndex);
-            playPhrase(nextIndex);
-          };
-          await audio.play();
-          setPlaying(true);
-          setPaused(false);
-          return;
-        }
-      }
-
       const urlResponse = await createTtsSpeakUrl(payload);
-      audio = new Audio(urlResponse.url);
+      const audio = new Audio(urlResponse.url);
       audioRef.current = audio;
+      audio.onerror = async () => {
+        const mediaError = audio.error?.code ? `Audio error code ${audio.error.code}` : "Audio error";
+        try {
+          const res = await fetch(urlResponse.url, { credentials: "include" });
+          const detail = await res.text();
+          setError(detail || mediaError);
+        } catch {
+          setError(mediaError);
+        } finally {
+          setPlaying(false);
+          setPaused(false);
+        }
+      };
       audio.onended = () => {
         if (activeIndexRef.current !== index) return;
         const nextIndex = index + 1;
