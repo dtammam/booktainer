@@ -7,14 +7,17 @@ import multipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
 import { extension as mimeExtension, lookup as lookupMime } from "mime-types";
 import { v4 as uuidv4 } from "uuid";
-import { deleteBook, getBook, getProgress, insertBook, listBooks, setProgress, updateBookAuthor, updateBookCover, updateBookMetadata, updateBookStatus, updateBookTitle } from "./db";
+import { getProgress, insertBook, setProgress, updateBookCover, updateBookMetadata, updateBookStatus } from "./db";
 import { env } from "./env";
 import { dataPaths } from "./paths";
 import { convertMobiToEpub } from "./mobi";
-import type { BookRecord, BooksListResponse, BookProgressResponse } from "@booktainer/shared";
+import type { BookProgressResponse } from "@booktainer/shared";
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
 import { registerHealthRoutes } from "./modules/health/routes";
+import { registerBookRoutes } from "./modules/books/routes";
+import { getBook } from "./modules/books/repo";
+import { toBookRecord } from "./modules/books/service";
 
 const app = Fastify({
   logger: {
@@ -28,23 +31,6 @@ async function ensureDataDirs() {
   await fsp.mkdir(dataPaths.library, { recursive: true });
   await fsp.mkdir(dataPaths.covers, { recursive: true });
   await fsp.mkdir(dataPaths.tmp, { recursive: true });
-}
-
-function toBookRecord(row: ReturnType<typeof getBook>): BookRecord {
-  if (!row) {
-    throw new Error("Book not found");
-  }
-  return {
-    id: row.id,
-    title: row.title,
-    author: row.author,
-    format: row.format as BookRecord["format"],
-    canonicalFormat: row.canonicalFormat as BookRecord["canonicalFormat"],
-    dateAdded: row.dateAdded,
-    coverUrl: row.coverPath ? `/api/books/${row.id}/cover` : null,
-    status: row.status as BookRecord["status"],
-    errorMessage: row.errorMessage
-  };
 }
 
 function normalizeExtension(filename: string): string {
@@ -181,58 +167,8 @@ if (fs.existsSync(webDist)) {
 }
 
 registerHealthRoutes(app);
+registerBookRoutes(app);
 
-app.get("/api/books", async (request, reply) => {
-  const sort = (request.query as { sort?: string }).sort || "dateAdded";
-  const q = (request.query as { q?: string }).q || null;
-  const sortKey = (sort === "title" || sort === "author" || sort === "dateAdded") ? sort : "dateAdded";
-  const rows = listBooks(sortKey, q);
-  const items = rows.map((row) => toBookRecord(row));
-  const response: BooksListResponse = { items };
-  return reply.send(response);
-});
-
-app.get("/api/books/:id", async (request, reply) => {
-  const id = (request.params as { id: string }).id;
-  const row = getBook(id);
-  if (!row) {
-    return reply.code(404).send({ error: "Not found" });
-  }
-  return reply.send(toBookRecord(row));
-});
-
-app.patch("/api/books/:id", async (request, reply) => {
-  const id = (request.params as { id: string }).id;
-  const body = request.body as { title?: string; author?: string | null };
-  const row = getBook(id);
-  if (!row) {
-    return reply.code(404).send({ error: "Not found" });
-  }
-  if (body.title !== undefined) {
-    if (!body.title.trim()) {
-      return reply.code(400).send({ error: "Missing title" });
-    }
-    updateBookTitle(id, body.title.trim());
-  }
-  if (body.author !== undefined) {
-    const author = body.author?.trim();
-    updateBookAuthor(id, author ? author : null);
-  }
-  const updated = getBook(id);
-  return reply.send(toBookRecord(updated));
-});
-
-app.delete("/api/books/:id", async (request, reply) => {
-  const id = (request.params as { id: string }).id;
-  const row = getBook(id);
-  if (!row) {
-    return reply.code(404).send({ error: "Not found" });
-  }
-  const bookDir = path.dirname(row.filePathOriginal);
-  await fsp.rm(bookDir, { recursive: true, force: true });
-  deleteBook(id);
-  return reply.send({ ok: true });
-});
 
 app.get("/api/books/:id/file", async (request, reply) => {
   const id = (request.params as { id: string }).id;
