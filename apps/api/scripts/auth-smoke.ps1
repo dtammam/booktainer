@@ -29,7 +29,7 @@ try {
 
   for ($i = 1; $i -le $maxAttempts; $i++) {
     try {
-      $response = Invoke-WebRequest -Uri $healthUrl -TimeoutSec 3
+      $response = Invoke-WebRequest -Uri $healthUrl -TimeoutSec 3 -UseBasicParsing
       if ($response.StatusCode -eq 200) {
         $ok = $true
         break
