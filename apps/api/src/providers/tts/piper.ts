@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
-import { PassThrough, Readable } from "node:stream";
+import { Readable } from "node:stream";
+import { promises as fsp } from "node:fs";
+import { dataPaths } from "../../paths";
 import { env } from "../../env";
 import type { TtsProvider, TtsSpeakRequest, TtsSpeakResponse, TtsVoice } from "./interface";
 
@@ -121,31 +123,36 @@ export function createPiperProvider(): TtsProvider {
       assertCommandAvailable("piper");
 
       const lengthScale = Math.max(0.5, Math.min(2, 1 / Math.max(input.rate || 1, 0.5)));
+      const tempFile = path.join(dataPaths.tmp, `${input.voice}-${Date.now()}.wav`);
       const piper = spawn("piper", [
         "--model", modelPath,
         "--config", configPath,
         "--length_scale", lengthScale.toString(),
-        "--output_file", "-"
+        "--output_file", tempFile
       ]);
 
       piper.stdin.write(input.text);
       piper.stdin.end();
 
-      const stream = new PassThrough();
-      let bytes = 0;
-      piper.stdout.on("data", (chunk) => {
-        bytes += chunk.length;
+      await new Promise<void>((resolve, reject) => {
+        piper.on("error", reject);
+        piper.on("close", (code) => {
+          if (code !== 0) {
+            reject(new Error("Piper exited with error."));
+            return;
+          }
+          resolve();
+        });
       });
-      piper.stdout.pipe(stream);
-      piper.on("close", (code) => {
-        if (code !== 0 || bytes === 0) {
-          stream.destroy(new Error("Piper produced no audio."));
-          return;
-        }
-        stream.end();
-      });
-      piper.on("error", (error) => {
-        stream.destroy(error);
+
+      const stat = await fsp.stat(tempFile);
+      if (stat.size === 0) {
+        await fsp.unlink(tempFile);
+        throw new Error("Piper produced no audio.");
+      }
+      const stream = fs.createReadStream(tempFile);
+      stream.on("close", () => {
+        fsp.unlink(tempFile).catch(() => null);
       });
 
       return {
