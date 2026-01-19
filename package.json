@@ -1,14 +1,11 @@
 {
   "name": "booktainer",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@9.15.9",
   "scripts": {
-    "dev": "concurrently -k \"npm:dev --workspace apps/api\" \"npm:dev --workspace apps/web\"",
-    "build": "npm run build --workspace packages/shared && npm run build --workspace apps/api && npm run build --workspace apps/web",
-    "lint": "npm run lint --workspace packages/shared && npm run lint --workspace apps/api && npm run lint --workspace apps/web"
+    "dev": "concurrently -k \"pnpm --filter ./apps/api dev\" \"pnpm --filter ./apps/web dev\"",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
   },
   "overrides": {
     "@xmldom/xmldom": "^0.8.10"

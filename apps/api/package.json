@@ -9,7 +9,7 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@booktainer/shared": "*",
+    "@booktainer/shared": "workspace:*",
     "@fastify/multipart": "^8.1.0",
     "@fastify/static": "^7.0.4",
     "better-sqlite3": "^11.1.2",
@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "tsx": "^4.16.2",
-    "typescript": "^5.4.5",
+    "typescript": "^5.9.3",
     "@types/mime-types": "^2.1.4",
     "@types/node": "^20.14.9",
     "@types/uuid": "^10.0.0"

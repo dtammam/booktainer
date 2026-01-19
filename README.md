@@ -5,11 +5,20 @@ Booktainer is a single-container web library + reader for PDF, EPUB, MOBI, TXT, 
 ## Dev
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm -r build
+pnpm dev
 ```
 
 API runs on `http://localhost:8080`, web on `http://localhost:5173`.
+
+Dev note:
+- corepack pnpm is broken on Windows Node 22.13.1 (keyid error); use npm-installed pnpm.
+- Ensure PATH contains: C:\Users\dean\.npm-global
+- Clean install:
+  - remove node_modules folders and pnpm-lock.yaml
+  - pnpm install
+  - pnpm -r build
 
 ## Docker
 
