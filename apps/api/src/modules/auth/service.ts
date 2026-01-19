@@ -93,7 +93,7 @@ export async function authenticateUser(input: { email: string; password: string;
   if (!record) {
     return null;
   }
-  const ok = await argon2.verify(record.password_hash, input.password, { type: argon2.argon2id });
+  const ok = await argon2.verify(record.password_hash, input.password);
   if (!ok) {
     return null;
   }

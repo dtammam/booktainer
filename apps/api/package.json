@@ -26,6 +26,7 @@
   "devDependencies": {
     "tsx": "^4.16.2",
     "typescript": "^5.9.3",
+    "@types/cookie": "^0.6.0",
     "@types/mime-types": "^2.1.4",
     "@types/node": "^20.14.9",
     "@types/uuid": "^10.0.0"
