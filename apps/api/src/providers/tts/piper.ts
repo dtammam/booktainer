@@ -56,7 +56,7 @@ async function downloadFile(url: string, targetPath: string) {
   }
   await new Promise<void>((resolve, reject) => {
     const file = fs.createWriteStream(targetPath);
-    const stream = Readable.fromWeb(res.body as unknown as ReadableStream);
+    const stream = Readable.fromWeb(res.body as unknown as import("stream/web").ReadableStream);
     stream.pipe(file);
     stream.on("error", reject);
     file.on("finish", () => resolve());

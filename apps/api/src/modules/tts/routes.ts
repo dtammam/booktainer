@@ -27,7 +27,12 @@ export function registerTtsRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "Invalid request body" });
     }
     try {
-      const result = await speakTts(parsed.data);
+      const result = await speakTts({
+        mode: parsed.data.mode,
+        voice: parsed.data.voice,
+        rate: parsed.data.rate ?? 1,
+        text: parsed.data.text
+      });
       reply.header("Cache-Control", "no-store");
       reply.header("Content-Type", result.contentType);
       return reply.send(result.stream);

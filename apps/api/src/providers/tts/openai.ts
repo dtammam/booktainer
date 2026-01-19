@@ -49,7 +49,7 @@ export function createOpenAiProvider(): TtsProvider {
         const detail = await res.text().catch(() => "");
         throw new Error(detail || "OpenAI TTS request failed.");
       }
-      const stream = Readable.fromWeb(res.body as unknown as ReadableStream);
+      const stream = Readable.fromWeb(res.body as unknown as import("stream/web").ReadableStream);
       return {
         stream,
         contentType: "audio/mpeg"
