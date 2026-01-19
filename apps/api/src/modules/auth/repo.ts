@@ -28,9 +28,15 @@ export function countUsers(): number {
 
 export function getDefaultOwnerId(): string | null {
   const stmt = db.prepare(`
-    SELECT id FROM users WHERE is_admin = 1 ORDER BY created_at LIMIT 1
-    UNION ALL
-    SELECT id FROM users ORDER BY created_at LIMIT 1
+    SELECT id FROM (
+      SELECT id, created_at, 0 as is_fallback
+      FROM users
+      WHERE is_admin = 1
+      UNION ALL
+      SELECT id, created_at, 1 as is_fallback
+      FROM users
+    )
+    ORDER BY is_fallback, created_at
     LIMIT 1
   `);
   const row = stmt.get() as { id: string } | undefined;
