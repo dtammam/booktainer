@@ -70,6 +70,11 @@ function assertCommandAvailable(command: string) {
   }
 }
 
+function isCommandAvailable(command: string) {
+  const result = spawnSync(command, ["-version"], { stdio: "ignore" });
+  return !result.error;
+}
+
 function listInstalledVoices(): TtsVoice[] {
   ensureVoicesDir();
   const entries = fs.readdirSync(env.piperVoicesDir);
@@ -167,15 +172,34 @@ export function createPiperProvider(): TtsProvider {
         await fsp.unlink(tempFile);
         throw new Error("Piper produced no audio.");
       }
-      const stream = fs.createReadStream(tempFile);
+      let outputPath = tempFile;
+      let contentType = "audio/wav";
+
+      if (isCommandAvailable("ffmpeg")) {
+        const mp3Path = tempFile.replace(/\.wav$/, ".mp3");
+        const ffmpeg = spawnSync("ffmpeg", [
+          "-y",
+          "-loglevel", "error",
+          "-i", tempFile,
+          mp3Path
+        ]);
+        if (!ffmpeg.error) {
+          contentType = "audio/mpeg";
+          outputPath = mp3Path;
+          fsp.unlink(tempFile).catch(() => null);
+        }
+      }
+
+      const outputStat = await fsp.stat(outputPath);
+      const stream = fs.createReadStream(outputPath);
       stream.on("close", () => {
-        fsp.unlink(tempFile).catch(() => null);
+        fsp.unlink(outputPath).catch(() => null);
       });
 
       return {
         stream,
-        contentType: "audio/wav",
-        contentLength: stat.size
+        contentType,
+        contentLength: outputStat.size
       };
     }
   };
