@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import type { BookRecord } from "@booktainer/shared";
-import { getBook, getProgress, saveProgress } from "../api";
+import { AuthError, getBook, getProgress, saveProgress } from "../api";
 import { useThrottle } from "../hooks/useThrottle";
 import { useTheme } from "../hooks/useTheme";
 import EpubReader from "../readers/EpubReader";
@@ -25,6 +25,7 @@ export default function ReaderPage() {
   const pendingAutoPlay = useRef(false);
   const epubControls = useRef<{ next: () => void; prev: () => void } | null>(null);
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   const loadBook = () => {
     if (!id) return;
@@ -40,6 +41,10 @@ export default function ReaderPage() {
         }
       })
       .catch((err) => {
+        if (err instanceof AuthError) {
+          navigate("/login", { replace: true });
+          return;
+        }
         setError(err instanceof Error ? err.message : "Failed to load book");
       })
       .finally(() => setLoading(false));
@@ -57,7 +62,11 @@ export default function ReaderPage() {
 
   const throttledSave = useThrottle((location: Record<string, unknown>) => {
     if (!id) return;
-    saveProgress(id, location).catch(() => null);
+    saveProgress(id, location).catch((err) => {
+      if (err instanceof AuthError) {
+        navigate("/login", { replace: true });
+      }
+    });
   }, 1500);
 
   const reader = useMemo(() => {

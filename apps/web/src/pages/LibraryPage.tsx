@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { deleteBook, listBooks, renameBook, updateAuthor, uploadBook } from "../api";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthError, deleteBook, listBooks, renameBook, updateAuthor, uploadBook } from "../api";
 import type { BookRecord } from "@booktainer/shared";
 import { useTheme } from "../hooks/useTheme";
+import { useAuth } from "../hooks/useAuth";
 
 const sortOptions = [
   { value: "dateAdded", label: "Date added" },
@@ -17,6 +18,8 @@ export default function LibraryPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const fetchItems = async () => {
     setLoading(true);
@@ -25,6 +28,10 @@ export default function LibraryPage() {
       const data = await listBooks({ sort, q });
       setItems(data);
     } catch (err) {
+      if (err instanceof AuthError) {
+        navigate("/login", { replace: true });
+        return;
+      }
       setError(err instanceof Error ? err.message : "Failed to load library");
     } finally {
       setLoading(false);
@@ -43,6 +50,10 @@ export default function LibraryPage() {
       await uploadBook(file);
       await fetchItems();
     } catch (err) {
+      if (err instanceof AuthError) {
+        navigate("/login", { replace: true });
+        return;
+      }
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       event.target.value = "";
@@ -58,6 +69,10 @@ export default function LibraryPage() {
       await renameBook(book.id, nextTitle.trim());
       await fetchItems();
     } catch (err) {
+      if (err instanceof AuthError) {
+        navigate("/login", { replace: true });
+        return;
+      }
       setError(err instanceof Error ? err.message : "Rename failed");
     }
   };
@@ -71,6 +86,10 @@ export default function LibraryPage() {
       await updateAuthor(book.id, nextAuthor.trim() ? nextAuthor.trim() : null);
       await fetchItems();
     } catch (err) {
+      if (err instanceof AuthError) {
+        navigate("/login", { replace: true });
+        return;
+      }
       setError(err instanceof Error ? err.message : "Author update failed");
     }
   };
@@ -84,8 +103,17 @@ export default function LibraryPage() {
       await deleteBook(book.id);
       await fetchItems();
     } catch (err) {
+      if (err instanceof AuthError) {
+        navigate("/login", { replace: true });
+        return;
+      }
       setError(err instanceof Error ? err.message : "Delete failed");
     }
+  };
+
+  const onLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
   };
 
   const filteredItems = useMemo(() => items, [items]);
@@ -96,9 +124,13 @@ export default function LibraryPage() {
         <div>
           <div className="header-row">
             <p className="eyebrow">Booktainer</p>
-            <button className="theme-toggle" onClick={toggleTheme}>
-              {theme === "dark" ? "Light" : "Dark"}
-            </button>
+            <div className="header-actions">
+              {user && <span className="user-chip">{user.email}</span>}
+              <button className="theme-toggle" onClick={toggleTheme}>
+                {theme === "dark" ? "Light" : "Dark"}
+              </button>
+              <button className="theme-toggle" onClick={onLogout}>Logout</button>
+            </div>
           </div>
           <h1>Library</h1>
           <p className="subhead">Your private stack of PDF, EPUB, MOBI, TXT, and Markdown.</p>

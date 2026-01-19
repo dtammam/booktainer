@@ -1,12 +1,41 @@
-import type { BookRecord, BooksListResponse, BookProgressResponse } from "@booktainer/shared";
+import type { AuthLoginRequest, AuthLoginResponse, AuthMeResponse, BookRecord, BooksListResponse, BookProgressResponse } from "@booktainer/shared";
+
+export class AuthError extends Error {
+  status: number;
+
+  constructor(message = "Unauthorized", status = 401) {
+    super(message);
+    this.name = "AuthError";
+    this.status = status;
+  }
+}
 
 async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, init);
+  const res = await fetch(input, { ...init, credentials: "include" });
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new AuthError();
+    }
     const text = await res.text();
     throw new Error(text || `Request failed (${res.status})`);
   }
   return res.json() as Promise<T>;
+}
+
+export async function login(input: AuthLoginRequest): Promise<AuthLoginResponse> {
+  return requestJson<AuthLoginResponse>("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input)
+  });
+}
+
+export async function getMe(): Promise<AuthMeResponse> {
+  return requestJson<AuthMeResponse>("/api/auth/me");
+}
+
+export async function logout(): Promise<void> {
+  await requestJson("/api/auth/logout", { method: "POST" });
 }
 
 export async function listBooks(params: { sort: string; q: string }): Promise<BookRecord[]> {
