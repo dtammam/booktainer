@@ -119,7 +119,6 @@ export function createPiperProvider(): TtsProvider {
         throw new Error("Piper voice not installed.");
       }
       assertCommandAvailable("piper");
-      assertCommandAvailable("ffmpeg");
 
       const lengthScale = Math.max(0.5, Math.min(2, 1 / Math.max(input.rate || 1, 0.5)));
       const piper = spawn("piper", [
@@ -132,19 +131,9 @@ export function createPiperProvider(): TtsProvider {
       piper.stdin.write(input.text);
       piper.stdin.end();
 
-      const ffmpeg = spawn("ffmpeg", [
-        "-loglevel", "error",
-        "-f", "wav",
-        "-i", "pipe:0",
-        "-f", "mp3",
-        "pipe:1"
-      ]);
-
-      piper.stdout.pipe(ffmpeg.stdin);
-
       return {
-        stream: ffmpeg.stdout,
-        contentType: "audio/mpeg"
+        stream: piper.stdout,
+        contentType: "audio/wav"
       };
     }
   };

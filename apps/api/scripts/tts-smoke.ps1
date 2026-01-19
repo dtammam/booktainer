@@ -57,7 +57,7 @@ try {
   Invoke-RestMethod -Uri "http://localhost:8080/api/tts/offline/install-voice" -Method Post -Body $installBody -ContentType "application/json" -WebSession $session | Out-Null
 
   $offlineBody = @{ mode = "offline"; voice = $offlineVoice; rate = 1; text = "hello world" } | ConvertTo-Json
-  $offlineOut = Join-Path $DataDir "hello-offline.mp3"
+  $offlineOut = Join-Path $DataDir "hello-offline.wav"
   Invoke-WebRequest -Uri "http://localhost:8080/api/tts/speak" -Method Post -Body $offlineBody -ContentType "application/json" -WebSession $session -OutFile $offlineOut | Out-Null
 
   if ($env:OPENAI_API_KEY) {

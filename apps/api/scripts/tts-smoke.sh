@@ -59,7 +59,7 @@ curl -fsS -b "$cookie_jar" -H "Content-Type: application/json" -d "$install_payl
 
 offline_payload="{\"mode\":\"offline\",\"voice\":\"${offline_voice}\",\"rate\":1,\"text\":\"hello world\"}"
 curl -fsS -b "$cookie_jar" -H "Content-Type: application/json" -d "$offline_payload" \
-  http://localhost:8080/api/tts/speak -o "${DATA_DIR}/hello-offline.mp3" >/dev/null
+  http://localhost:8080/api/tts/speak -o "${DATA_DIR}/hello-offline.wav" >/dev/null
 
 if [[ -n "${OPENAI_API_KEY:-}" ]]; then
   online_payload='{"mode":"online","voice":"alloy","rate":1,"text":"hello world"}'
