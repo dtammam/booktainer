@@ -1,9 +1,23 @@
+import fs from "node:fs";
 import type { FastifyInstance } from "fastify";
 import { ttsInstallVoiceSchema, ttsSpeakSchema, ttsSpeakUrlSchema } from "./schemas";
 import { createTtsToken, getDefaultTtsSelection, getTtsToken, listTtsVoices, speakTts } from "./service";
 import { getPiperCatalog, installPiperVoice } from "../../providers/tts/piper";
 
 export function registerTtsRoutes(app: FastifyInstance) {
+  const parseRange = (range: string | undefined, size: number) => {
+    if (!range) return null;
+    const match = range.match(/bytes=(\d+)-(\d+)?/);
+    if (!match) return null;
+    const start = Number.parseInt(match[1], 10);
+    const end = match[2] ? Number.parseInt(match[2], 10) : size - 1;
+    return { start, end, chunkSize: end - start + 1 };
+  };
+
+  const cleanupFile = (filePath: string) => {
+    fs.promises.unlink(filePath).catch(() => null);
+  };
+
   app.get("/api/tts/voices", async (request, reply) => {
     if (!request.user) {
       return reply.code(401).send({ error: "Unauthorized" });
@@ -34,9 +48,30 @@ export function registerTtsRoutes(app: FastifyInstance) {
         text: parsed.data.text
       });
       reply.header("Cache-Control", "no-store");
+      if (result.filePath) {
+        const stat = await fs.promises.stat(result.filePath);
+        const range = parseRange(request.headers.range, stat.size);
+        reply.header("Content-Type", result.contentType);
+        reply.header("Accept-Ranges", "bytes");
+        if (range) {
+          reply.code(206);
+          reply.header("Content-Range", `bytes ${range.start}-${range.end}/${stat.size}`);
+          reply.header("Content-Length", range.chunkSize.toString());
+          const stream = fs.createReadStream(result.filePath, { start: range.start, end: range.end });
+          stream.on("close", () => cleanupFile(result.filePath!));
+          return reply.send(stream);
+        }
+        reply.header("Content-Length", stat.size.toString());
+        const stream = fs.createReadStream(result.filePath);
+        stream.on("close", () => cleanupFile(result.filePath!));
+        return reply.send(stream);
+      }
       reply.header("Content-Type", result.contentType);
       if (result.contentLength) {
         reply.header("Content-Length", result.contentLength.toString());
+      }
+      if (!result.stream) {
+        return reply.code(500).send({ error: "TTS stream unavailable" });
       }
       return reply.send(result.stream);
     } catch (error) {
@@ -73,9 +108,30 @@ export function registerTtsRoutes(app: FastifyInstance) {
     try {
       const result = await speakTts(entry.input);
       reply.header("Cache-Control", "no-store");
+      if (result.filePath) {
+        const stat = await fs.promises.stat(result.filePath);
+        const range = parseRange(request.headers.range, stat.size);
+        reply.header("Content-Type", result.contentType);
+        reply.header("Accept-Ranges", "bytes");
+        if (range) {
+          reply.code(206);
+          reply.header("Content-Range", `bytes ${range.start}-${range.end}/${stat.size}`);
+          reply.header("Content-Length", range.chunkSize.toString());
+          const stream = fs.createReadStream(result.filePath, { start: range.start, end: range.end });
+          stream.on("close", () => cleanupFile(result.filePath!));
+          return reply.send(stream);
+        }
+        reply.header("Content-Length", stat.size.toString());
+        const stream = fs.createReadStream(result.filePath);
+        stream.on("close", () => cleanupFile(result.filePath!));
+        return reply.send(stream);
+      }
       reply.header("Content-Type", result.contentType);
       if (result.contentLength) {
         reply.header("Content-Length", result.contentLength.toString());
+      }
+      if (!result.stream) {
+        return reply.code(500).send({ error: "TTS stream unavailable" });
       }
       return reply.send(result.stream);
     } catch (error) {

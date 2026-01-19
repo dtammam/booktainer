@@ -11,7 +11,8 @@ export type TtsSpeakRequest = {
 };
 
 export type TtsSpeakResponse = {
-  stream: NodeJS.ReadableStream;
+  stream?: NodeJS.ReadableStream;
+  filePath?: string;
   contentType: string;
   contentLength?: number;
 };

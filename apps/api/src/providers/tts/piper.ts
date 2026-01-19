@@ -191,13 +191,9 @@ export function createPiperProvider(): TtsProvider {
       }
 
       const outputStat = await fsp.stat(outputPath);
-      const stream = fs.createReadStream(outputPath);
-      stream.on("close", () => {
-        fsp.unlink(outputPath).catch(() => null);
-      });
 
       return {
-        stream,
+        filePath: outputPath,
         contentType,
         contentLength: outputStat.size
       };
