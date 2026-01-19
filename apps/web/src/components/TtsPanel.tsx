@@ -198,7 +198,7 @@ export default function TtsPanel({
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = "";
-      audioRef.current = null;
+      audioRef.current.load();
     }
     if (watchdogTimer.current) {
       window.clearInterval(watchdogTimer.current);
@@ -241,7 +241,11 @@ export default function TtsPanel({
         text: safePhrase
       };
       const urlResponse = await createTtsSpeakUrl(payload);
-      const audio = new Audio(urlResponse.url);
+      const audio = audioRef.current ?? new Audio();
+      audio.preload = "auto";
+      audio.playsInline = true;
+      audio.src = urlResponse.url;
+      audio.load();
       audioRef.current = audio;
       audio.onerror = async () => {
         const mediaError = audio.error?.code ? `Audio error code ${audio.error.code}` : "Audio error";
