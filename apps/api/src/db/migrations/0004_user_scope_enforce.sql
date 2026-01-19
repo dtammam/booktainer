@@ -15,9 +15,19 @@ CREATE TABLE books_new (
 );
 
 WITH default_owner AS (
-  SELECT id FROM users WHERE is_admin = 1 ORDER BY created_at LIMIT 1
-  UNION ALL
-  SELECT id FROM users ORDER BY created_at LIMIT 1
+  SELECT id FROM (
+    SELECT id, created_at, 0 as is_fallback
+    FROM users
+    WHERE is_admin = 1
+    ORDER BY created_at
+    LIMIT 1
+    UNION ALL
+    SELECT id, created_at, 1 as is_fallback
+    FROM users
+    ORDER BY created_at
+    LIMIT 1
+  )
+  ORDER BY is_fallback, created_at
   LIMIT 1
 )
 INSERT INTO books_new (
@@ -68,9 +78,19 @@ CREATE TABLE progress_new (
 );
 
 WITH default_owner AS (
-  SELECT id FROM users WHERE is_admin = 1 ORDER BY created_at LIMIT 1
-  UNION ALL
-  SELECT id FROM users ORDER BY created_at LIMIT 1
+  SELECT id FROM (
+    SELECT id, created_at, 0 as is_fallback
+    FROM users
+    WHERE is_admin = 1
+    ORDER BY created_at
+    LIMIT 1
+    UNION ALL
+    SELECT id, created_at, 1 as is_fallback
+    FROM users
+    ORDER BY created_at
+    LIMIT 1
+  )
+  ORDER BY is_fallback, created_at
   LIMIT 1
 )
 INSERT INTO progress_new (user_id, bookId, locationJson, updatedAt)
