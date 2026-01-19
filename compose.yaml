@@ -1,0 +1,14 @@
+services:
+  booktainer:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    environment:
+      PORT: 8080
+      DATA_DIR: /data
+      ALLOW_UPLOAD: "true"
+      MAX_UPLOAD_MB: 500

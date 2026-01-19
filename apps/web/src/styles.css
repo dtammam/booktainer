@@ -1,0 +1,827 @@
+:root {
+  color-scheme: light;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  --bg: #f3f0ea;
+  --bg-accent: #e6efe3;
+  --ink: #1f2320;
+  --muted: #5b655e;
+  --accent: #11684e;
+  --accent-soft: #d7eadc;
+  --card: #ffffff;
+  --shadow: 0 20px 45px rgba(24, 32, 24, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #f7f0e7, var(--bg)) fixed;
+  color: var(--ink);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body.theme-dark {
+  --bg: #0f1210;
+  --bg-accent: #1d2520;
+  --ink: #f5f0e6;
+  --muted: #9fa79f;
+  --accent: #6fc7a3;
+  --accent-soft: #1f2a24;
+  --card: #171c19;
+  --shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+  background: radial-gradient(circle at top, #1c2420, var(--bg)) fixed;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page {
+  padding: 48px clamp(20px, 5vw, 72px);
+  min-height: 100vh;
+}
+
+.library-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+  margin-bottom: 36px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 8px 0;
+}
+
+.library-header h1 {
+  font-family: "Fraunces", serif;
+  font-size: clamp(32px, 4vw, 54px);
+  margin: 0;
+}
+
+.subhead {
+  color: var(--muted);
+  margin: 8px 0 0 0;
+  max-width: 420px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  min-width: min(520px, 100%);
+}
+
+.search {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.search input,
+.search select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d4d9d1;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+}
+
+body.theme-dark .search input,
+body.theme-dark .search select {
+  background: #101512;
+  border-color: #2c3530;
+  color: var(--ink);
+}
+
+.upload {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload input {
+  display: none;
+}
+
+.alert {
+  background: #ffe5e5;
+  color: #9a2222;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.state {
+  color: var(--muted);
+  font-size: 16px;
+  padding: 24px 0;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.book-card {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 50px rgba(24, 32, 24, 0.16);
+}
+
+.cover {
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--accent-soft);
+  display: grid;
+  place-items: center;
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-placeholder {
+  height: 100%;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  font-family: "Fraunces", serif;
+  font-size: 40px;
+  color: var(--accent);
+}
+
+.meta h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.card-actions button {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.card-actions .danger {
+  color: #b34141;
+}
+
+.format-pill {
+  display: inline-flex;
+  align-self: flex-start;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+
+.meta p {
+  margin: 0 0 8px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.status {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  display: grid;
+  gap: 4px;
+}
+
+.status.error {
+  color: #9a2222;
+}
+
+.reader-page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reader-header {
+  padding: 32px clamp(20px, 5vw, 72px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  background: linear-gradient(120deg, #e6efe3, #f6ede2);
+}
+
+body.theme-dark .reader-header {
+  background: linear-gradient(120deg, #141a17, #1d2520);
+}
+
+.reader-title {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.reader-header h2 {
+  margin: 10px 0 0 0;
+  font-family: "Fraunces", serif;
+  font-size: clamp(26px, 3vw, 40px);
+}
+
+.reader-header p {
+  margin: 6px 0 0 0;
+  color: var(--muted);
+}
+
+.ghost {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid #cbd2c9;
+  padding: 6px 14px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+body.theme-dark .ghost {
+  border-color: #3a433d;
+}
+
+body.theme-dark .format-pill {
+  background: #1e2a24;
+  color: #9fe3c8;
+}
+
+.theme-toggle {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reader-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.reader-shell {
+  flex: 1;
+  padding: 24px clamp(20px, 5vw, 72px) 48px;
+  overflow: hidden;
+}
+
+.reader {
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 24px;
+  height: 100%;
+  min-height: 0;
+}
+
+body.theme-dark .reader {
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);
+}
+
+.reader.epub {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.epub-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.epub-canvas {
+  height: calc(70vh - 52px);
+}
+
+.epub-reflow {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 8px 12px;
+  background: var(--card);
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  height: 100%;
+}
+
+.epub-article {
+  max-width: 940px;
+  width: min(940px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 48px;
+  line-height: 1.7;
+  height: 100%;
+  align-content: start;
+}
+
+.epub-column {
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.epub-article > :first-child {
+  margin-top: 0;
+}
+
+.epub-article p {
+  margin: 0 0 1em 0;
+}
+
+.epub-article h1,
+.epub-article h2,
+.epub-article h3,
+.epub-article h4,
+.epub-article h5,
+.epub-article h6 {
+  font-family: "Fraunces", serif;
+  margin: 0 0 0.6em 0;
+  grid-column: 1 / -1;
+}
+
+
+.epub-article img {
+  max-width: 100%;
+  height: auto;
+  break-inside: avoid;
+}
+
+.epub-article figure {
+  margin: 16px auto;
+  text-align: center;
+}
+
+.epub-article figcaption {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+
+.page-metrics {
+  display: flex;
+  gap: 12px;
+}
+
+.page-count {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.reader.pdf {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  height: 100%;
+}
+
+.pdf-canvas {
+  width: 100%;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.pdf-canvas canvas {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.pdf-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.pdf-controls button,
+.tts-controls button {
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tts-panel {
+  display: grid;
+  gap: 12px;
+  min-width: min(520px, 100%);
+  justify-items: center;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.tts-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.tts-controls label {
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tts-controls select,
+.tts-controls input[type="range"] {
+  font-family: inherit;
+}
+
+.toggle {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tiktok-mode {
+  position: relative;
+  background:
+    conic-gradient(from 120deg, rgba(20, 255, 190, 0.12), transparent 40%, rgba(255, 210, 120, 0.2), transparent 70%),
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.15), transparent),
+    linear-gradient(135deg, #0b0f10, #1c2b2a);
+  color: #fef8f0;
+  padding: 24px 24px;
+  border-radius: 20px;
+  height: 140px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  overflow: hidden;
+  box-shadow: 0 22px 50px rgba(12, 16, 12, 0.45);
+  align-self: center;
+  width: min(720px, 100%);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+body.theme-dark .tiktok-mode {
+  background:
+    conic-gradient(from 120deg, rgba(20, 255, 190, 0.2), transparent 40%, rgba(255, 210, 120, 0.24), transparent 70%),
+    radial-gradient(circle at top, rgba(110, 255, 210, 0.18), transparent),
+    linear-gradient(135deg, #0a0f0d, #111a16);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+}
+
+.tiktok-mode::before {
+  animation: floatGlow 5s ease-in-out infinite;
+}
+
+.tiktok-mode::after {
+  animation: floatGlow 7s ease-in-out infinite reverse;
+}
+
+.tiktok-mode .spark {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.25), transparent 60%);
+  mix-blend-mode: screen;
+  animation: sparkPulse 4s ease-in-out infinite;
+}
+
+.tiktok-mode .spark-left {
+  left: -40px;
+  top: 10px;
+}
+
+.tiktok-mode .spark-right {
+  right: -30px;
+  bottom: 0;
+  animation-delay: 1.2s;
+}
+
+.tiktok-mode .beam {
+  position: absolute;
+  width: 220px;
+  height: 20px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  opacity: 0.6;
+  filter: blur(2px);
+  animation: beamSweep 5s ease-in-out infinite;
+}
+
+.tiktok-mode .beam-left {
+  top: 18px;
+  left: -40px;
+}
+
+.tiktok-mode .beam-right {
+  bottom: 18px;
+  right: -40px;
+  animation-delay: 1.6s;
+}
+
+.tiktok-mode .caption {
+  font-family: "Fraunces", serif;
+  font-size: 26px;
+  line-height: 1.3;
+  position: relative;
+  z-index: 1;
+  animation: captionGlow 2.4s ease-in-out infinite, captionFloat 3.4s ease-in-out infinite;
+  max-width: 100%;
+  display: block;
+  overflow: hidden;
+  max-height: 3.9em;
+  text-overflow: clip;
+  padding: 0 10px;
+}
+
+.tts-highlight {
+  background: rgba(255, 230, 120, 0.4);
+  border-bottom: 2px solid rgba(255, 230, 120, 0.75);
+}
+
+.tiktok-mode::before {
+  content: "";
+  position: absolute;
+  inset: -70% 10% auto -30%;
+  height: 220%;
+  background: radial-gradient(circle, rgba(34, 187, 141, 0.55), transparent 60%);
+  animation: floatGlow 7s ease-in-out infinite;
+}
+
+.tiktok-mode::after {
+  content: "";
+  position: absolute;
+  inset: auto -20% -35% 30%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 209, 133, 0.45), transparent 55%);
+  animation: floatGlow 9s ease-in-out infinite reverse;
+}
+
+.tiktok-mode .pulse-border {
+  position: absolute;
+  inset: 6px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 20px rgba(120, 255, 210, 0.25);
+  animation: borderPulse 3.2s ease-in-out infinite;
+}
+
+.tiktok-mode .orbit {
+  position: absolute;
+  inset: 8%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: orbitSpin 10s linear infinite;
+}
+
+.tiktok-mode .orbit::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes floatGlow {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-12%) rotate(6deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes captionGlow {
+  0%,
+  100% {
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    text-shadow: 0 0 18px rgba(214, 255, 230, 0.5);
+  }
+}
+
+@keyframes orbitSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes borderPulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes sparkPulse {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes beamSweep {
+  0% {
+    transform: translateX(-20%) rotate(-6deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(20%) rotate(6deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(-20%) rotate(-6deg);
+    opacity: 0.3;
+  }
+}
+
+@keyframes captionFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.reader.text {
+  height: 100%;
+  overflow: auto;
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+.reader.text article {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+@media (max-width: 720px) {
+  .reader-header {
+    padding: 18px 20px;
+  }
+  .reader-header h2 {
+    font-size: 22px;
+  }
+  .reader-shell {
+    padding: 16px 18px 32px;
+  }
+  .tts-controls {
+    gap: 8px;
+  }
+  .tts-controls button {
+    padding: 6px 10px;
+  }
+  .tiktok-mode {
+    height: 120px;
+  }
+  .tiktok-mode .caption {
+    font-size: 20px;
+    max-height: 2.6em;
+  }
+}
+
+@media (max-width: 720px) {
+  .controls {
+    min-width: 100%;
+  }
+  .reader-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .tts-controls {
+    justify-content: flex-start;
+    gap: 6px;
+  }
+  .tts-controls label span {
+    font-size: 10px;
+  }
+  .reader-shell {
+    padding: 12px 14px 28px;
+  }
+  .reader-header h2 {
+    font-size: 20px;
+  }
+  .reader-header p {
+    font-size: 12px;
+  }
+  .tts-panel {
+    min-width: 100%;
+  }
+  .tiktok-mode {
+    height: 120px;
+  }
+  .tiktok-mode .caption {
+    font-size: 20px;
+    max-height: 2.6em;
+  }
+  .epub-reflow {
+    height: 100%;
+    padding: 8px;
+  }
+  .epub-article {
+    grid-template-columns: 1fr;
+  }
+}

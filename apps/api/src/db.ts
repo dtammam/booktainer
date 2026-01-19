@@ -1,0 +1,150 @@
+import fs from "node:fs";
+import Database from "better-sqlite3";
+import { dataPaths } from "./paths";
+
+export type SortKey = "dateAdded" | "title" | "author";
+
+export interface DbBook {
+  id: string;
+  title: string;
+  author: string | null;
+  format: string;
+  canonicalFormat: string;
+  dateAdded: string;
+  filePathOriginal: string;
+  filePathCanonical: string | null;
+  coverPath: string | null;
+  status: string;
+  errorMessage: string | null;
+}
+
+export interface DbProgress {
+  bookId: string;
+  locationJson: string;
+  updatedAt: string;
+}
+
+fs.mkdirSync(dataPaths.root, { recursive: true });
+export const db = new Database(dataPaths.dbFile);
+
+db.pragma("journal_mode = WAL");
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS books (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    author TEXT,
+    format TEXT NOT NULL,
+    canonicalFormat TEXT NOT NULL,
+    dateAdded TEXT NOT NULL,
+    filePathOriginal TEXT NOT NULL,
+    filePathCanonical TEXT,
+    coverPath TEXT,
+    status TEXT NOT NULL,
+    errorMessage TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS progress (
+    bookId TEXT PRIMARY KEY,
+    locationJson TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY(bookId) REFERENCES books(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS books_title_idx ON books(title);
+  CREATE INDEX IF NOT EXISTS books_author_idx ON books(author);
+`);
+
+export function insertBook(book: DbBook) {
+  const stmt = db.prepare(`
+    INSERT INTO books (
+      id, title, author, format, canonicalFormat, dateAdded,
+      filePathOriginal, filePathCanonical, coverPath, status, errorMessage
+    ) VALUES (
+      @id, @title, @author, @format, @canonicalFormat, @dateAdded,
+      @filePathOriginal, @filePathCanonical, @coverPath, @status, @errorMessage
+    )
+  `);
+  stmt.run(book);
+}
+
+export function updateBookStatus(id: string, status: string, errorMessage: string | null, filePathCanonical: string | null) {
+  const stmt = db.prepare(`
+    UPDATE books
+    SET status = @status, errorMessage = @errorMessage, filePathCanonical = @filePathCanonical
+    WHERE id = @id
+  `);
+  stmt.run({ id, status, errorMessage, filePathCanonical });
+}
+
+export function updateBookTitle(id: string, title: string) {
+  const stmt = db.prepare(`
+    UPDATE books
+    SET title = @title
+    WHERE id = @id
+  `);
+  stmt.run({ id, title });
+}
+
+export function updateBookMetadata(id: string, title: string, author: string | null) {
+  const stmt = db.prepare(`
+    UPDATE books
+    SET title = @title, author = @author
+    WHERE id = @id
+  `);
+  stmt.run({ id, title, author });
+}
+
+export function updateBookAuthor(id: string, author: string | null) {
+  const stmt = db.prepare(`
+    UPDATE books
+    SET author = @author
+    WHERE id = @id
+  `);
+  stmt.run({ id, author });
+}
+
+export function updateBookCover(id: string, coverPath: string | null) {
+  const stmt = db.prepare(`
+    UPDATE books
+    SET coverPath = @coverPath
+    WHERE id = @id
+  `);
+  stmt.run({ id, coverPath });
+}
+
+export function deleteBook(id: string) {
+  const stmt = db.prepare("DELETE FROM books WHERE id = ?");
+  stmt.run(id);
+}
+
+export function getBook(id: string): DbBook | undefined {
+  const stmt = db.prepare("SELECT * FROM books WHERE id = ?");
+  return stmt.get(id) as DbBook | undefined;
+}
+
+export function listBooks(sort: SortKey, query: string | null): DbBook[] {
+  const orderBy = sort === "title" ? "title COLLATE NOCASE" : sort === "author" ? "author COLLATE NOCASE" : "dateAdded DESC";
+  const where = query ? "WHERE title LIKE @q OR author LIKE @q" : "";
+  const stmt = db.prepare(`SELECT * FROM books ${where} ORDER BY ${orderBy}`);
+  if (!query) {
+    return stmt.all() as DbBook[];
+  }
+  return stmt.all({ q: `%${query}%` }) as DbBook[];
+}
+
+export function setProgress(bookId: string, locationJson: string, updatedAt: string) {
+  const stmt = db.prepare(`
+    INSERT INTO progress (bookId, locationJson, updatedAt)
+    VALUES (@bookId, @locationJson, @updatedAt)
+    ON CONFLICT(bookId) DO UPDATE SET
+      locationJson = excluded.locationJson,
+      updatedAt = excluded.updatedAt
+  `);
+  stmt.run({ bookId, locationJson, updatedAt });
+}
+
+export function getProgress(bookId: string): DbProgress | undefined {
+  const stmt = db.prepare("SELECT * FROM progress WHERE bookId = ?");
+  return stmt.get(bookId) as DbProgress | undefined;
+}
