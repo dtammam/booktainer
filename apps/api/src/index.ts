@@ -4,12 +4,11 @@ import fsp from "node:fs/promises";
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
-import { getProgress, setProgress } from "./db";
 import { env } from "./env";
 import { dataPaths } from "./paths";
-import type { BookProgressResponse } from "@booktainer/shared";
 import { registerHealthRoutes } from "./modules/health/routes";
 import { registerBookRoutes } from "./modules/books/routes";
+import { registerProgressRoutes } from "./modules/progress/routes";
 
 const app = Fastify({
   logger: {
@@ -41,32 +40,7 @@ if (fs.existsSync(webDist)) {
 
 registerHealthRoutes(app);
 registerBookRoutes(app);
-
-app.get("/api/books/:id/progress", async (request, reply) => {
-  const id = (request.params as { id: string }).id;
-  const progress = getProgress(id);
-  const response: BookProgressResponse = {
-    progress: progress
-      ? {
-          bookId: progress.bookId,
-          location: JSON.parse(progress.locationJson) as Record<string, unknown>,
-          updatedAt: progress.updatedAt
-        }
-      : null
-  };
-  return reply.send(response);
-});
-
-app.post("/api/books/:id/progress", async (request, reply) => {
-  const id = (request.params as { id: string }).id;
-  const body = request.body as { location?: Record<string, unknown> };
-  if (!body?.location) {
-    return reply.code(400).send({ error: "Missing location" });
-  }
-  const updatedAt = new Date().toISOString();
-  setProgress(id, JSON.stringify(body.location), updatedAt);
-  return reply.send({ ok: true });
-});
+registerProgressRoutes(app);
 
 
 app.setNotFoundHandler((request, reply) => {
