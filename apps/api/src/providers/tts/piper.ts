@@ -183,10 +183,17 @@ export function createPiperProvider(): TtsProvider {
           "-i", tempFile,
           mp3Path
         ]);
-        if (!ffmpeg.error) {
-          contentType = "audio/mpeg";
-          outputPath = mp3Path;
-          fsp.unlink(tempFile).catch(() => null);
+        if (!ffmpeg.error && ffmpeg.status === 0) {
+          try {
+            const mp3Stat = await fsp.stat(mp3Path);
+            if (mp3Stat.size > 0) {
+              contentType = "audio/mpeg";
+              outputPath = mp3Path;
+              fsp.unlink(tempFile).catch(() => null);
+            }
+          } catch {
+            // keep wav fallback
+          }
         }
       }
 

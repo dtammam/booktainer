@@ -5,6 +5,7 @@ import { createTtsToken, getDefaultTtsSelection, getTtsToken, listTtsVoices, spe
 import { getPiperCatalog, installPiperVoice } from "../../providers/tts/piper";
 
 export function registerTtsRoutes(app: FastifyInstance) {
+  const sanitizeText = (input: string) => input.replace(/[\uD800-\uDFFF]/g, "").trim();
   const parseRange = (range: string | undefined, size: number) => {
     if (!range) return null;
     const match = range.match(/bytes=(\d+)-(\d+)?/);
@@ -40,12 +41,16 @@ export function registerTtsRoutes(app: FastifyInstance) {
     if (!parsed.success) {
       return reply.code(400).send({ error: "Invalid request body" });
     }
+    const safeText = sanitizeText(parsed.data.text);
+    if (!safeText) {
+      return reply.code(400).send({ error: "Text is empty after sanitization" });
+    }
     try {
       const result = await speakTts({
         mode: parsed.data.mode,
         voice: parsed.data.voice,
         rate: parsed.data.rate ?? 1,
-        text: parsed.data.text
+        text: safeText
       });
       reply.header("Cache-Control", "no-store");
       if (result.filePath) {
@@ -87,11 +92,15 @@ export function registerTtsRoutes(app: FastifyInstance) {
     if (!parsed.success) {
       return reply.code(400).send({ error: "Invalid request body" });
     }
+    const safeText = sanitizeText(parsed.data.text);
+    if (!safeText) {
+      return reply.code(400).send({ error: "Text is empty after sanitization" });
+    }
     const token = createTtsToken(request.user.id, {
       mode: parsed.data.mode,
       voice: parsed.data.voice,
       rate: parsed.data.rate ?? 1,
-      text: parsed.data.text
+      text: safeText
     });
     return reply.send({ url: `/api/tts/speak/${token}` });
   });
