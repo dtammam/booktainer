@@ -15,11 +15,32 @@ type PiperVoiceSpec = {
 
 const PIPER_VOICE_CATALOG: PiperVoiceSpec[] = [
   {
+    id: "en_US-ryan-medium",
+    name: "Ryan (en-US)",
+    locale: "en-US",
+    onnxUrl: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/medium/en_US-ryan-medium.onnx",
+    configUrl: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/medium/en_US-ryan-medium.onnx.json"
+  },
+  {
+    id: "en_US-amy-medium",
+    name: "Amy (en-US)",
+    locale: "en-US",
+    onnxUrl: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/amy/medium/en_US-amy-medium.onnx",
+    configUrl: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/amy/medium/en_US-amy-medium.onnx.json"
+  },
+  {
     id: "en_US-lessac-medium",
     name: "Lessac (en-US)",
     locale: "en-US",
     onnxUrl: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx",
     configUrl: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json"
+  },
+  {
+    id: "en_GB-alba-medium",
+    name: "Alba (en-GB)",
+    locale: "en-GB",
+    onnxUrl: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alba/medium/en_GB-alba-medium.onnx",
+    configUrl: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alba/medium/en_GB-alba-medium.onnx.json"
   }
 ];
 
