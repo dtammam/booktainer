@@ -1,5 +1,19 @@
+import path from "node:path";
 import type { FastifyInstance } from "fastify";
-import { getBookRecord, listBookRecords, removeBook, updateBookRecord } from "./service";
+import { env } from "../../env";
+import { getBookRecord, listBookRecords, removeBook, updateBookRecord, uploadBook } from "./service";
+
+function normalizeExtension(filename: string): string {
+  const ext = path.extname(filename).toLowerCase().replace(".", "");
+  return ext;
+}
+
+function formatFromExtension(ext: string) {
+  if (ext === "pdf" || ext === "epub" || ext === "mobi" || ext === "txt" || ext === "md") {
+    return ext;
+  }
+  return null;
+}
 
 export function registerBookRoutes(app: FastifyInstance) {
   app.get("/api/books", async (request, reply) => {
@@ -43,5 +57,23 @@ export function registerBookRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: "Not found" });
     }
     return reply.send({ ok: true });
+  });
+
+  app.post("/api/books/upload", async (request, reply) => {
+    if (!env.allowUpload) {
+      return reply.code(403).send({ error: "Uploads disabled" });
+    }
+    const data = await request.file();
+    if (!data) {
+      return reply.code(400).send({ error: "Missing file" });
+    }
+    const ext = normalizeExtension(data.filename);
+    const format = formatFromExtension(ext);
+    if (!format) {
+      return reply.code(400).send({ error: "Unsupported file format" });
+    }
+
+    const record = await uploadBook(data, format, ext);
+    return reply.send(record);
   });
 }
