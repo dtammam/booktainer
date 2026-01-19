@@ -14,6 +14,7 @@ import { convertMobiToEpub } from "./mobi";
 import type { BookRecord, BooksListResponse, BookProgressResponse } from "@booktainer/shared";
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
+import { registerHealthRoutes } from "./modules/health/routes";
 
 const app = Fastify({
   logger: {
@@ -179,7 +180,7 @@ if (fs.existsSync(webDist)) {
   });
 }
 
-app.get("/api/health", async () => ({ status: "ok" }));
+registerHealthRoutes(app);
 
 app.get("/api/books", async (request, reply) => {
   const sort = (request.query as { sort?: string }).sort || "dateAdded";
