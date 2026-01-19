@@ -58,7 +58,9 @@ function getVoicePaths(voiceId: string) {
 }
 
 function sanitizeText(input: string) {
-  return input.replace(/[\uD800-\uDFFF]/g, "").trim();
+  const stripped = input.replace(/[\uD800-\uDFFF]/g, "");
+  const safe = Buffer.from(stripped, "utf8").toString("utf8");
+  return safe.trim();
 }
 
 function assertCommandAvailable(command: string) {
