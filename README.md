@@ -64,5 +64,6 @@ docker compose up --build
 - Progress is stored per book and restored on reload.
 - TTS streams audio from the server (online OpenAI or offline Piper).
 - Cached TTS audio is stored under `/data/tts-cache` for faster repeats.
+- Offline TTS requires the `piper` CLI and `ffmpeg` (Dockerfile installs both).
 - `/data` is required for persistence (library, covers, progress).
 - Future: track OpenAI TTS costs per session.
