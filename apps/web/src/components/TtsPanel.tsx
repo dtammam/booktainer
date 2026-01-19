@@ -237,8 +237,13 @@ export default function TtsPanel({
         const mediaError = audio.error?.code ? `Audio error code ${audio.error.code}` : "Audio error";
         try {
           const res = await fetch(urlResponse.url, { credentials: "include" });
-          const detail = await res.text();
-          setError(detail || mediaError);
+          const contentType = res.headers.get("content-type") || "";
+          if (contentType.startsWith("application/json") || contentType.startsWith("text/")) {
+            const detail = await res.text();
+            setError(detail || mediaError);
+          } else {
+            setError(mediaError);
+          }
         } catch {
           setError(mediaError);
         } finally {
