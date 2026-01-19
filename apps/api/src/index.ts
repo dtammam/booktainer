@@ -29,6 +29,7 @@ async function ensureDataDirs() {
   await fsp.mkdir(dataPaths.library, { recursive: true });
   await fsp.mkdir(dataPaths.covers, { recursive: true });
   await fsp.mkdir(dataPaths.tmp, { recursive: true });
+  await fsp.mkdir(dataPaths.ttsCache, { recursive: true });
 }
 
 app.register(multipart, {

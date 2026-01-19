@@ -63,12 +63,16 @@ export function registerTtsRoutes(app: FastifyInstance) {
           reply.header("Content-Range", `bytes ${range.start}-${range.end}/${stat.size}`);
           reply.header("Content-Length", range.chunkSize.toString());
           const stream = fs.createReadStream(result.filePath, { start: range.start, end: range.end });
-          stream.on("close", () => cleanupFile(result.filePath!));
+          if (!result.cacheFile) {
+            stream.on("close", () => cleanupFile(result.filePath!));
+          }
           return reply.send(stream);
         }
         reply.header("Content-Length", stat.size.toString());
         const stream = fs.createReadStream(result.filePath);
-        stream.on("close", () => cleanupFile(result.filePath!));
+        if (!result.cacheFile) {
+          stream.on("close", () => cleanupFile(result.filePath!));
+        }
         return reply.send(stream);
       }
       reply.header("Content-Type", result.contentType);
@@ -127,12 +131,16 @@ export function registerTtsRoutes(app: FastifyInstance) {
           reply.header("Content-Range", `bytes ${range.start}-${range.end}/${stat.size}`);
           reply.header("Content-Length", range.chunkSize.toString());
           const stream = fs.createReadStream(result.filePath, { start: range.start, end: range.end });
-          stream.on("close", () => cleanupFile(result.filePath!));
+          if (!result.cacheFile) {
+            stream.on("close", () => cleanupFile(result.filePath!));
+          }
           return reply.send(stream);
         }
         reply.header("Content-Length", stat.size.toString());
         const stream = fs.createReadStream(result.filePath);
-        stream.on("close", () => cleanupFile(result.filePath!));
+        if (!result.cacheFile) {
+          stream.on("close", () => cleanupFile(result.filePath!));
+        }
         return reply.send(stream);
       }
       reply.header("Content-Type", result.contentType);

@@ -15,6 +15,7 @@ export type TtsSpeakResponse = {
   filePath?: string;
   contentType: string;
   contentLength?: number;
+  cacheFile?: boolean;
 };
 
 export interface TtsProvider {
