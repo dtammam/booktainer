@@ -213,6 +213,7 @@ export default function ReaderPage() {
               epubControls.current?.next();
             }
           }}
+          onAuthError={() => navigate("/login", { replace: true })}
         />
       </header>
       <main className="reader-shell">

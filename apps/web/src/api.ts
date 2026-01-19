@@ -1,4 +1,4 @@
-import type { AuthLoginRequest, AuthLoginResponse, AuthMeResponse, BookRecord, BooksListResponse, BookProgressResponse } from "@booktainer/shared";
+import type { AuthLoginRequest, AuthLoginResponse, AuthMeResponse, BookRecord, BooksListResponse, BookProgressResponse, TtsVoicesResponse } from "@booktainer/shared";
 
 export class AuthError extends Error {
   status: number;
@@ -36,6 +36,10 @@ export async function getMe(): Promise<AuthMeResponse> {
 
 export async function logout(): Promise<void> {
   await requestJson("/api/auth/logout", { method: "POST" });
+}
+
+export async function listTtsVoices(): Promise<TtsVoicesResponse> {
+  return requestJson<TtsVoicesResponse>("/api/tts/voices");
 }
 
 export async function listBooks(params: { sort: string; q: string }): Promise<BookRecord[]> {
