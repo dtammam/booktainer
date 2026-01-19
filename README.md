@@ -25,6 +25,9 @@ Dev note:
 - User scoping smoke test:
   - Windows: apps/api/scripts/user-scope-smoke.ps1
   - Bash: apps/api/scripts/user-scope-smoke.sh
+- TTS smoke test:
+  - Windows: apps/api/scripts/tts-smoke.ps1
+  - Bash: apps/api/scripts/tts-smoke.sh
 
 ## Docker
 
@@ -51,6 +54,9 @@ docker compose up --build
 - `SESSION_TTL_DAYS` (default: 30)
 - `ADMIN_EMAIL` (required for first admin bootstrap)
 - `ADMIN_PASSWORD` (required for first admin bootstrap)
+- `OPENAI_API_KEY` (enable online TTS)
+- `OPENAI_TTS_MODEL` (default: gpt-4o-mini-tts)
+- `PIPER_VOICES_DIR` (default: /data/tts-voices)
 
 ## Notes
 
