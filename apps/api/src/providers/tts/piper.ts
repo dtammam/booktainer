@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { Readable } from "node:stream";
 import { env } from "../../env";
 import type { TtsProvider, TtsSpeakRequest, TtsSpeakResponse, TtsVoice } from "./interface";
@@ -53,6 +53,13 @@ function getVoicePaths(voiceId: string) {
     modelPath: path.join(env.piperVoicesDir, `${voiceId}.onnx`),
     configPath: path.join(env.piperVoicesDir, `${voiceId}.onnx.json`)
   };
+}
+
+function assertCommandAvailable(command: string) {
+  const result = spawnSync(command, ["-version"], { stdio: "ignore" });
+  if (result.error) {
+    throw new Error(`${command} is not available on PATH.`);
+  }
 }
 
 function listInstalledVoices(): TtsVoice[] {
@@ -111,6 +118,8 @@ export function createPiperProvider(): TtsProvider {
       if (!fs.existsSync(modelPath) || !fs.existsSync(configPath)) {
         throw new Error("Piper voice not installed.");
       }
+      assertCommandAvailable("piper");
+      assertCommandAvailable("ffmpeg");
 
       const lengthScale = Math.max(0.5, Math.min(2, 1 / Math.max(input.rate || 1, 0.5)));
       const piper = spawn("piper", [
