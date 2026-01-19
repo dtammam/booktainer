@@ -41,6 +41,10 @@ docker compose up --build
 - `DATA_DIR` (default: /data)
 - `ALLOW_UPLOAD` (default: true)
 - `MAX_UPLOAD_MB` (default: 500)
+- `SESSION_SECRET` (required)
+- `SESSION_TTL_DAYS` (default: 30)
+- `ADMIN_EMAIL` (required for first admin bootstrap)
+- `ADMIN_PASSWORD` (required for first admin bootstrap)
 
 ## Notes
 

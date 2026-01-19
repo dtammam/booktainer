@@ -12,13 +12,16 @@
     "@booktainer/shared": "workspace:*",
     "@fastify/multipart": "^8.1.0",
     "@fastify/static": "^7.0.4",
+    "argon2": "^0.41.1",
     "better-sqlite3": "^11.1.2",
+    "cookie": "^0.6.0",
     "fast-xml-parser": "^4.5.0",
     "fastify": "^4.27.0",
     "jszip": "^3.10.1",
     "mime-types": "^2.1.35",
     "pino-pretty": "^11.2.2",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "tsx": "^4.16.2",

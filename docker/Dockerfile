@@ -24,6 +24,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY packages/shared/package.json packages/shared/package.json
 RUN npm install --omit=dev
 COPY --from=build /app/apps/api/dist apps/api/dist
+COPY --from=build /app/apps/api/src/db/migrations apps/api/dist/db/migrations
 COPY --from=build /app/apps/web/dist apps/web/dist
 COPY --from=build /app/packages/shared/dist packages/shared/dist
 RUN useradd -m -u 10001 appuser \

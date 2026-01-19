@@ -25,6 +25,39 @@ export interface ApiError {
   error: string;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  isAdmin: boolean;
+}
+
+export interface AuthLoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthLoginResponse {
+  user: AuthUser;
+}
+
+export interface AuthMeResponse {
+  user: AuthUser;
+}
+
+export interface AuthLogoutResponse {
+  ok: true;
+}
+
+export interface AdminCreateUserRequest {
+  email: string;
+  password: string;
+  isAdmin?: boolean;
+}
+
+export interface AdminCreateUserResponse {
+  user: AuthUser;
+}
+
 export interface BooksListResponse {
   items: BookRecord[];
 }
