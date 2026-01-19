@@ -2,7 +2,7 @@ import path from "node:path";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
-import { extension as mimeExtension } from "mime-types";
+import { extension as mimeExtension, lookup as lookupMime } from "mime-types";
 import { v4 as uuidv4 } from "uuid";
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
@@ -67,6 +67,53 @@ export async function removeBook(id: string): Promise<boolean> {
   await fsp.rm(bookDir, { recursive: true, force: true });
   deleteBook(id);
   return true;
+}
+
+type RangeResult = {
+  start: number;
+  end: number;
+  chunkSize: number;
+};
+
+function parseRangeHeader(range: string | undefined, size: number): RangeResult | null {
+  if (!range) return null;
+  const match = range.match(/bytes=(\d+)-(\d+)?/);
+  if (!match) return null;
+  const start = Number.parseInt(match[1], 10);
+  const end = match[2] ? Number.parseInt(match[2], 10) : size - 1;
+  return { start, end, chunkSize: end - start + 1 };
+}
+
+export async function getBookFileStream(id: string, rangeHeader?: string) {
+  const row = getBook(id);
+  if (!row) {
+    return null;
+  }
+  const filePath = row.filePathCanonical || row.filePathOriginal;
+  const mime = lookupMime(filePath) || "application/octet-stream";
+  const stat = await fsp.stat(filePath);
+  const range = parseRangeHeader(rangeHeader, stat.size);
+  const stream = range
+    ? fs.createReadStream(filePath, { start: range.start, end: range.end })
+    : fs.createReadStream(filePath);
+  return {
+    mime,
+    stat,
+    range,
+    stream
+  };
+}
+
+export function getBookCoverStream(id: string) {
+  const row = getBook(id);
+  if (!row || !row.coverPath) {
+    return null;
+  }
+  const mime = lookupMime(row.coverPath) || "application/octet-stream";
+  return {
+    mime,
+    stream: fs.createReadStream(row.coverPath)
+  };
 }
 
 type EpubPackage = {

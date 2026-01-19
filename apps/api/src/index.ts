@@ -4,14 +4,12 @@ import fsp from "node:fs/promises";
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
-import { lookup as lookupMime } from "mime-types";
 import { getProgress, setProgress } from "./db";
 import { env } from "./env";
 import { dataPaths } from "./paths";
 import type { BookProgressResponse } from "@booktainer/shared";
 import { registerHealthRoutes } from "./modules/health/routes";
 import { registerBookRoutes } from "./modules/books/routes";
-import { getBook } from "./modules/books/repo";
 
 const app = Fastify({
   logger: {
@@ -43,48 +41,6 @@ if (fs.existsSync(webDist)) {
 
 registerHealthRoutes(app);
 registerBookRoutes(app);
-
-app.get("/api/books/:id/file", async (request, reply) => {
-  const id = (request.params as { id: string }).id;
-  const row = getBook(id);
-  if (!row) {
-    return reply.code(404).send({ error: "Not found" });
-  }
-  const filePath = row.filePathCanonical || row.filePathOriginal;
-  const mime = lookupMime(filePath) || "application/octet-stream";
-  const stat = await fsp.stat(filePath);
-  const range = request.headers.range;
-  reply.header("Accept-Ranges", "bytes");
-
-  if (range) {
-    const match = range.match(/bytes=(\d+)-(\d+)?/);
-    if (match) {
-      const start = Number.parseInt(match[1], 10);
-      const end = match[2] ? Number.parseInt(match[2], 10) : stat.size - 1;
-      const chunkSize = end - start + 1;
-      reply.code(206);
-      reply.header("Content-Type", mime);
-      reply.header("Content-Range", `bytes ${start}-${end}/${stat.size}`);
-      reply.header("Content-Length", chunkSize.toString());
-      return reply.send(fs.createReadStream(filePath, { start, end }));
-    }
-  }
-
-  reply.header("Content-Type", mime);
-  reply.header("Content-Length", stat.size.toString());
-  return reply.send(fs.createReadStream(filePath));
-});
-
-app.get("/api/books/:id/cover", async (request, reply) => {
-  const id = (request.params as { id: string }).id;
-  const row = getBook(id);
-  if (!row || !row.coverPath) {
-    return reply.code(404).send({ error: "Not found" });
-  }
-  const mime = lookupMime(row.coverPath) || "application/octet-stream";
-  reply.header("Content-Type", mime);
-  return reply.send(fs.createReadStream(row.coverPath));
-});
 
 app.get("/api/books/:id/progress", async (request, reply) => {
   const id = (request.params as { id: string }).id;

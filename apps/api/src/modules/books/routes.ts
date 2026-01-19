@@ -1,7 +1,7 @@
 import path from "node:path";
 import type { FastifyInstance } from "fastify";
 import { env } from "../../env";
-import { getBookRecord, listBookRecords, removeBook, updateBookRecord, uploadBook } from "./service";
+import { getBookCoverStream, getBookFileStream, getBookRecord, listBookRecords, removeBook, updateBookRecord, uploadBook } from "./service";
 
 function normalizeExtension(filename: string): string {
   const ext = path.extname(filename).toLowerCase().replace(".", "");
@@ -75,5 +75,34 @@ export function registerBookRoutes(app: FastifyInstance) {
 
     const record = await uploadBook(data, format, ext);
     return reply.send(record);
+  });
+
+  app.get("/api/books/:id/file", async (request, reply) => {
+    const id = (request.params as { id: string }).id;
+    const result = await getBookFileStream(id, request.headers.range);
+    if (!result) {
+      return reply.code(404).send({ error: "Not found" });
+    }
+    reply.header("Accept-Ranges", "bytes");
+    if (result.range) {
+      reply.code(206);
+      reply.header("Content-Type", result.mime);
+      reply.header("Content-Range", `bytes ${result.range.start}-${result.range.end}/${result.stat.size}`);
+      reply.header("Content-Length", result.range.chunkSize.toString());
+      return reply.send(result.stream);
+    }
+    reply.header("Content-Type", result.mime);
+    reply.header("Content-Length", result.stat.size.toString());
+    return reply.send(result.stream);
+  });
+
+  app.get("/api/books/:id/cover", async (request, reply) => {
+    const id = (request.params as { id: string }).id;
+    const result = getBookCoverStream(id);
+    if (!result) {
+      return reply.code(404).send({ error: "Not found" });
+    }
+    reply.header("Content-Type", result.mime);
+    return reply.send(result.stream);
   });
 }
