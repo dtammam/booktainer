@@ -58,6 +58,35 @@ export interface AdminCreateUserResponse {
   user: AuthUser;
 }
 
+export interface TtsVoice {
+  id: string;
+  name: string;
+  locale?: string;
+}
+
+export interface TtsVoicesResponse {
+  online: TtsVoice[];
+  offline: TtsVoice[];
+  defaultMode: "online" | "offline";
+  defaultVoice: string;
+}
+
+export interface TtsSpeakRequest {
+  mode: "online" | "offline";
+  voice: string;
+  rate?: number;
+  text: string;
+}
+
+export interface TtsInstallVoiceRequest {
+  voice: string;
+}
+
+export interface TtsInstallVoiceResponse {
+  voice: TtsVoice;
+  catalog: TtsVoice[];
+}
+
 export interface BooksListResponse {
   items: BookRecord[];
 }

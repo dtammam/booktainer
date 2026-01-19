@@ -7,5 +7,8 @@ export const env = {
   sessionTtlDays: Number.parseInt(process.env.SESSION_TTL_DAYS || "30", 10),
   sessionCookieSecure: (process.env.SESSION_COOKIE_SECURE || "false").toLowerCase() === "true",
   adminEmail: process.env.ADMIN_EMAIL || "",
-  adminPassword: process.env.ADMIN_PASSWORD || ""
+  adminPassword: process.env.ADMIN_PASSWORD || "",
+  openAiApiKey: process.env.OPENAI_API_KEY || "",
+  openAiTtsModel: process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts",
+  piperVoicesDir: process.env.PIPER_VOICES_DIR || "/data/tts-voices"
 };

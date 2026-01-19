@@ -13,6 +13,7 @@ import { registerBookRoutes } from "./modules/books/routes";
 import { registerProgressRoutes } from "./modules/progress/routes";
 import { registerAuthRoutes } from "./modules/auth/routes";
 import { registerAdminRoutes } from "./modules/admin/routes";
+import { registerTtsRoutes } from "./modules/tts/routes";
 import { bootstrapAdmin, resolveRequestUser } from "./modules/auth/service";
 import { ensureDefaultOwnership } from "./modules/books/ownership";
 
@@ -54,6 +55,7 @@ registerBookRoutes(app);
 registerProgressRoutes(app);
 registerAuthRoutes(app);
 registerAdminRoutes(app);
+registerTtsRoutes(app);
 
 app.setNotFoundHandler((request, reply) => {
   if (request.raw.url?.startsWith("/api/")) {
