@@ -19,6 +19,9 @@ Dev note:
   - remove node_modules folders and pnpm-lock.yaml
   - pnpm install
   - pnpm -r build
+- Auth smoke test:
+  - Windows: apps/api/scripts/auth-smoke.ps1
+  - Bash: apps/api/scripts/auth-smoke.sh
 
 ## Docker
 
