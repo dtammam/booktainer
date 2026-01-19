@@ -61,6 +61,7 @@ try {
 
   $samplePath = Join-Path $DataDir "sample.txt"
   "Hello from user A" | Set-Content -Path $samplePath
+  Add-Type -AssemblyName System.Net.Http
   $fileStream = [System.IO.File]::OpenRead($samplePath)
   try {
     $fileContent = New-Object System.Net.Http.StreamContent($fileStream)
