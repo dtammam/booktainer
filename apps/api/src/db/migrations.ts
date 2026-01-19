@@ -16,7 +16,9 @@ function resolveMigrationsDir() {
   return direct;
 }
 
-export function runMigrations(db: Database.Database) {
+type BetterSqlite3Database = ReturnType<typeof Database>;
+
+export function runMigrations(db: BetterSqlite3Database) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS migrations (
       id TEXT PRIMARY KEY,
@@ -34,7 +36,7 @@ export function runMigrations(db: Database.Database) {
     .sort();
 
   const applied = new Set(
-    db.prepare("SELECT id FROM migrations").all().map((row) => (row as MigrationRow).id)
+    db.prepare("SELECT id FROM migrations").all().map((row: MigrationRow) => row.id)
   );
 
   const applyMigration = db.transaction((id: string, sql: string) => {
