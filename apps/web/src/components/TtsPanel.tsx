@@ -78,6 +78,8 @@ export default function TtsPanel({
   const watchdogTimer = useRef<number | null>(null);
   const playbackStartRef = useRef<number | null>(null);
   const estimateMsRef = useRef<number | null>(null);
+  const urlCacheRef = useRef<Map<number, { key: string; url: string }>>(new Map());
+  const prefetchRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     let alive = true;
@@ -192,6 +194,11 @@ export default function TtsPanel({
     }
   }, [availableVoices, voiceId]);
 
+  useEffect(() => {
+    urlCacheRef.current.clear();
+    prefetchRef.current.clear();
+  }, [mode, voiceId, rate, phrases]);
+
   function stopAudio() {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -208,7 +215,55 @@ export default function TtsPanel({
     estimateMsRef.current = null;
   }
 
-  const playPhrase = async (index: number) => {
+  const preparePlayback = (resetAudio: boolean) => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    if (resetAudio && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current.load();
+    }
+    if (watchdogTimer.current) {
+      window.clearInterval(watchdogTimer.current);
+      watchdogTimer.current = null;
+    }
+    playbackStartRef.current = null;
+    estimateMsRef.current = null;
+  };
+
+  const makeCacheKey = (phrase: string) => `${mode}|${voiceId}|${rate}|${phrase}`;
+
+  const getSpeakUrl = async (index: number, safePhrase: string) => {
+    const key = makeCacheKey(safePhrase);
+    const cached = urlCacheRef.current.get(index);
+    if (cached?.key === key) return cached.url;
+    const payload = { mode, voice: voiceId, rate, text: safePhrase };
+    const urlResponse = await createTtsSpeakUrl(payload);
+    urlCacheRef.current.set(index, { key, url: urlResponse.url });
+    return urlResponse.url;
+  };
+
+  const prefetchSpeakUrl = (index: number) => {
+    const phrase = phrases[index];
+    if (!phrase) return;
+    if (prefetchRef.current.has(index)) return;
+    const safePhrase = sanitizeText(phrase);
+    if (!safePhrase) return;
+    const key = makeCacheKey(safePhrase);
+    const cached = urlCacheRef.current.get(index);
+    if (cached?.key === key) return;
+    prefetchRef.current.add(index);
+    createTtsSpeakUrl({ mode, voice: voiceId, rate, text: safePhrase })
+      .then((urlResponse) => {
+        urlCacheRef.current.set(index, { key, url: urlResponse.url });
+      })
+      .catch(() => null)
+      .finally(() => {
+        prefetchRef.current.delete(index);
+      });
+  };
+
+  const playPhrase = async (index: number, resetAudio = true) => {
     const phrase = phrases[index];
     if (!phrase) {
       setPlaying(false);
@@ -226,7 +281,7 @@ export default function TtsPanel({
       return;
     }
 
-    stopAudio();
+    preparePlayback(resetAudio);
     setError(null);
     const controller = new AbortController();
     abortRef.current = controller;
@@ -234,23 +289,17 @@ export default function TtsPanel({
     estimateMsRef.current = Math.max(1400, safePhrase.length * 65 / Math.max(rate, 0.6) + 1200);
 
     try {
-      const payload = {
-        mode,
-        voice: voiceId,
-        rate,
-        text: safePhrase
-      };
-      const urlResponse = await createTtsSpeakUrl(payload);
+      const url = await getSpeakUrl(index, safePhrase);
       const audio = audioRef.current ?? new Audio();
       audio.preload = "auto";
       audio.playsInline = true;
-      audio.src = urlResponse.url;
+      audio.src = url;
       audio.load();
       audioRef.current = audio;
       audio.onerror = async () => {
         const mediaError = audio.error?.code ? `Audio error code ${audio.error.code}` : "Audio error";
         try {
-          const res = await fetch(urlResponse.url, { credentials: "include" });
+          const res = await fetch(url, { credentials: "include" });
           const contentType = res.headers.get("content-type") || "";
           if (contentType.startsWith("application/json") || contentType.startsWith("text/")) {
             const detail = await res.text();
@@ -277,7 +326,7 @@ export default function TtsPanel({
         }
         const nextIndex = index + 1;
         setCurrentIndex(nextIndex);
-        playPhrase(nextIndex);
+        playPhrase(nextIndex, false);
       };
       audio.onloadedmetadata = () => {
         const durationMs = Number.isFinite(audio.duration)
@@ -296,14 +345,14 @@ export default function TtsPanel({
           if (audioRef.current.ended) {
             const nextIndex = index + 1;
             setCurrentIndex(nextIndex);
-            playPhrase(nextIndex);
+            playPhrase(nextIndex, false);
             return;
           }
           if (Number.isFinite(audioRef.current.duration)) {
             if (audioRef.current.currentTime >= audioRef.current.duration - 0.05) {
               const nextIndex = index + 1;
               setCurrentIndex(nextIndex);
-              playPhrase(nextIndex);
+              playPhrase(nextIndex, false);
             }
             return;
           }
@@ -313,7 +362,7 @@ export default function TtsPanel({
             if (Date.now() - startedAt > estimateMs) {
               const nextIndex = index + 1;
               setCurrentIndex(nextIndex);
-              playPhrase(nextIndex);
+              playPhrase(nextIndex, false);
             }
           }
         }, 250);
@@ -327,6 +376,7 @@ export default function TtsPanel({
       await audio.play();
       setPlaying(true);
       setPaused(false);
+      prefetchSpeakUrl(index + 1);
     } catch (err) {
       if (err instanceof AuthError) {
         onAuthError?.();
@@ -367,7 +417,7 @@ export default function TtsPanel({
     const nextIndex = Math.min(currentIndex + 1, phrases.length - 1);
     setCurrentIndex(nextIndex);
     if (playing || paused) {
-      playPhrase(nextIndex);
+      playPhrase(nextIndex, true);
     }
   };
 
